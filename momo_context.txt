@@ -1,0 +1,421 @@
+
+### 檔案路徑：routes/web.php
+<?php
+
+use App\Http\Controllers\ProfileController;
+use Illuminate\Foundation\Application;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+
+Route::redirect('/', '/shop');
+
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+require __DIR__.'/auth.php';
+
+// 新增這行：購物商城首頁
+Route::get('/shop', function () {
+    return Inertia::render('Shop'); // 這會尋找 resources/js/Pages/Shop.jsx
+})->name('shop');
+
+--------------------------------------------------
+
+### 檔案路徑：app/Http/Middleware/HandleInertiaRequests.php
+<?php
+
+namespace App\Http\Middleware;
+
+use Illuminate\Http\Request;
+use Inertia\Middleware;
+
+class HandleInertiaRequests extends Middleware
+{
+    /**
+     * The root template that is loaded on the first page visit.
+     *
+     * @var string
+     */
+    protected $rootView = 'app';
+
+    /**
+     * Determine the current asset version.
+     */
+    public function version(Request $request): ?string
+    {
+        return parent::version($request);
+    }
+
+    /**
+     * Define the props that are shared by default.
+     *
+     * @return array<string, mixed>
+     */
+    public function share(Request $request): array
+    {
+        return [
+            ...parent::share($request),
+            'auth' => [
+                'user' => $request->user(),
+            ],
+        ];
+    }
+}
+
+
+--------------------------------------------------
+
+### 檔案路徑：resources/js/Pages/Shop.jsx
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+// 移除原本重複的這一行: import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react'; // 保留這一行，同時引入 Head 和 Link
+
+export default function Shop({ auth }) {
+    // 定義狀態
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+
+    // --- 新增：分頁狀態 ---
+    const [page, setPage] = useState(1);       // 目前頁碼
+    const [lastPage, setLastPage] = useState(1); // 總頁數
+
+    // 篩選條件
+    const [filters, setFilters] = useState({
+        keyword: '',
+        category_id: '',
+        price_min: '',
+        price_max: '',
+        sort: 'newest'
+    });
+
+    // 取得商品資料
+    const fetchProducts = async () => {
+        setLoading(true);
+        try {
+            // 將 page 參數加入請求
+            const response = await axios.get('/api/products', {
+                params: { ...filters, page: page }
+            });
+
+            // Laravel 的 paginate() 回傳結構：data (商品), meta (分頁資訊)
+            // Axios 的 response.data 才是 Laravel 回傳的完整 JSON
+            setProducts(response.data.data);
+
+            // 更新總頁數 (從 Laravel 回傳的 last_page 取得)
+            setLastPage(response.data.last_page);
+
+        } catch (error) {
+            console.error("無法取得商品:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // 監聽：當 filters 改變時 -> 重置回第 1 頁 (並觸發 fetch)
+    useEffect(() => {
+        setPage(1);
+    }, [filters]);
+
+    // 監聽：當 page 改變時 -> 抓取新資料
+    useEffect(() => {
+        const debounce = setTimeout(() => {
+            fetchProducts();
+        }, 300);
+        return () => clearTimeout(debounce);
+    }, [page, filters]);
+
+    const handleFilterChange = (e) => {
+        const { name, value } = e.target;
+        setFilters(prev => ({ ...prev, [name]: value }));
+    };
+
+    // 換頁處理
+    const handlePageChange = (newPage) => {
+        if (newPage >= 1 && newPage <= lastPage) {
+            setPage(newPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+
+    return (
+        <div className="min-h-screen bg-gray-100">
+            <Head title="Momo 商城" />
+
+            {/* 頂部導覽列 */}
+            <nav className="bg-white shadow p-4 mb-6 sticky top-0 z-50">
+                <div className="max-w-7xl mx-auto flex justify-between items-center">
+                    <h1 className="text-2xl font-bold text-pink-600 flex items-center gap-2">
+                        <Link href="/shop">Momo Demo</Link>
+                    </h1>
+
+                    {/* 右邊：會員狀態區 */}
+                    <div className="flex items-center gap-4">
+                        {auth.user ? (
+                            <>
+                                <span className="text-gray-700 font-medium">Hi, {auth.user.name} 👋</span>
+                                <Link href="/logout" method="post" as="button" className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition">登出</Link>
+                            </>
+                        ) : (
+                            <>
+                                <Link href="/login" className="text-sm text-gray-600 hover:text-pink-600 transition">登入</Link>
+                                <Link href="/register" className="text-sm bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition">註冊</Link>
+                            </>
+                        )}
+                    </div>
+                </div>
+            </nav>
+
+            <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10">
+
+                {/* 左側篩選欄 */}
+                <aside className="w-full md:w-1/4 bg-white p-6 rounded-lg shadow h-fit sticky top-24">
+                    <h2 className="text-lg font-bold mb-4 border-b pb-2">商品篩選</h2>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">搜尋名稱</label>
+                        <input
+                            type="text"
+                            name="keyword"
+                            value={filters.keyword}
+                            onChange={handleFilterChange}
+                            placeholder="輸入手機、衣服..."
+                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-pink-500 focus:ring-pink-500"
+                        />
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">分類</label>
+                        <select
+                            name="category_id"
+                            onChange={handleFilterChange}
+                            className="w-full border-gray-300 rounded-md shadow-sm"
+                        >
+                            <option value="">所有分類</option>
+                            <option value="2">手機 (ID:2)</option>
+                            <option value="4">上衣 (ID:4)</option>
+                        </select>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">價格範圍</label>
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="number"
+                                name="price_min"
+                                placeholder="最低"
+                                onChange={handleFilterChange}
+                                className="w-1/2 border-gray-300 rounded-md text-sm"
+                            />
+                            <span>-</span>
+                            <input
+                                type="number"
+                                name="price_max"
+                                placeholder="最高"
+                                onChange={handleFilterChange}
+                                className="w-1/2 border-gray-300 rounded-md text-sm"
+                            />
+                        </div>
+                    </div>
+
+                    <div className="mb-4">
+                        <label className="block text-sm font-medium text-gray-700 mb-1">排序</label>
+                        <select
+                            name="sort"
+                            onChange={handleFilterChange}
+                            className="w-full border-gray-300 rounded-md shadow-sm"
+                        >
+                            <option value="newest">最新上架</option>
+                            <option value="price_asc">價格：低到高</option>
+                            <option value="price_desc">價格：高到低</option>
+                        </select>
+                    </div>
+                </aside>
+
+                {/* 右側商品牆 */}
+                <main className="w-full md:w-3/4">
+                    {loading ? (
+                        <div className="text-center py-20 text-gray-500">載入中...</div>
+                    ) : (
+                        <>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[500px]">
+                                {products.length > 0 ? (
+                                    products.map((product) => (
+                                        <div key={product.id} className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group">
+                                            <div className="h-48 bg-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-gray-300 transition">
+                                                Product Image
+                                            </div>
+                                            <div className="p-4">
+                                                <div className="text-xs text-pink-600 font-bold mb-1">
+                                                    {product.category ? product.category.name : '未分類'}
+                                                </div>
+                                                <h3 className="font-bold text-gray-800 truncate">{product.name}</h3>
+                                                <div className="mt-2 flex justify-between items-center">
+                                                    <span className="text-lg font-bold text-red-600">
+                                                        ${Number(product.price).toLocaleString()}
+                                                    </span>
+                                                    <span className="text-xs text-gray-500">庫存: {product.stock}</span>
+                                                </div>
+                                                <button className="mt-3 w-full bg-pink-600 text-white py-2 rounded text-sm hover:bg-pink-700 transition">
+                                                    加入購物車
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <div className="col-span-3 text-center py-10 text-gray-500 bg-white rounded-lg">
+                                        沒有找到符合條件的商品
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* --- 新增：分頁按鈕 --- */}
+                            {products.length > 0 && (
+                                <div className="mt-8 flex justify-center items-center gap-4">
+                                    <button
+                                        onClick={() => handlePageChange(page - 1)}
+                                        disabled={page === 1}
+                                        className={`px-4 py-2 rounded border ${page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+                                    >
+                                        &larr; 上一頁
+                                    </button>
+
+                                    <span className="text-gray-700 font-medium">
+                                        Page {page} of {lastPage}
+                                    </span>
+
+                                    <button
+                                        onClick={() => handlePageChange(page + 1)}
+                                        disabled={page === lastPage}
+                                        className={`px-4 py-2 rounded border ${page === lastPage ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+                                    >
+                                        下一頁 &rarr;
+                                    </button>
+                                </div>
+                            )}
+                        </>
+                    )}
+                </main>
+            </div>
+        </div>
+    );
+}
+
+--------------------------------------------------
+
+### 檔案路徑：app/Http/Controllers/Auth/AuthenticatedSessionController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Auth\LoginRequest;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class AuthenticatedSessionController extends Controller
+{
+    /**
+     * Display the login view.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('Auth/Login', [
+            'canResetPassword' => Route::has('password.request'),
+            'status' => session('status'),
+        ]);
+    }
+
+    /**
+     * Handle an incoming authentication request.
+     */
+    public function store(LoginRequest $request): RedirectResponse
+    {
+        $request->authenticate();
+
+        $request->session()->regenerate();
+
+        return redirect()->intended('/shop');
+    }
+
+    /**
+     * Destroy an authenticated session.
+     */
+    public function destroy(Request $request): RedirectResponse
+    {
+        Auth::guard('web')->logout();
+
+        $request->session()->invalidate();
+
+        $request->session()->regenerateToken();
+
+        return redirect('/shop');
+    }
+}
+
+### 檔案路徑：app/Http/Controllers/Auth/RegisteredUserController.php
+<?php
+
+namespace App\Http\Controllers\Auth;
+
+use App\Http\Controllers\Controller;
+use App\Models\User;
+use Illuminate\Auth\Events\Registered;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules;
+use Inertia\Inertia;
+use Inertia\Response;
+
+class RegisteredUserController extends Controller
+{
+    /**
+     * Display the registration view.
+     */
+    public function create(): Response
+    {
+        return Inertia::render('Auth/Register');
+    }
+
+    /**
+     * Handle an incoming registration request.
+     *
+     * @throws \Illuminate\Validation\ValidationException
+     */
+    public function store(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
+            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+        ]);
+
+        $user = User::create([
+            'name' => $request->name,
+            'email' => $request->email,
+            'password' => Hash::make($request->password),
+        ]);
+
+        event(new Registered($user));
+
+        Auth::login($user);
+
+        return redirect('/shop');
+    }
+}
+
+
+--------------------------------------------------
