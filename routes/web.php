@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ShopController; // 🌟 1. 在最上面新增這行，匯入 ShopController
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -19,7 +20,5 @@ Route::middleware('auth')->group(function () {
 
 require __DIR__.'/auth.php';
 
-// 新增這行：購物商城首頁
-Route::get('/shop', function () {
-    return Inertia::render('Shop'); // 這會尋找 resources/js/Pages/Shop.jsx
-})->name('shop');
+// 🌟 2. 把原本寫著 function() {...} 的那段，改成下面這行簡潔的寫法
+Route::get('/shop', [ShopController::class, 'index'])->name('shop');
