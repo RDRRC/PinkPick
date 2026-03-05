@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 // 移除原本重複的這一行: import { Head } from '@inertiajs/react';
-import { Head, Link } from '@inertiajs/react'; // 保留這一行，同時引入 Head 和 Link
+import { Head } from '@inertiajs/react'; // 保留這一行，同時引入 Head 和 Link
+import Navbar from '../Components/Navbar'; // 🌟 新增這行：把迎賓員請過來！
+import Pagination from '../Components/Pagination'; // 🌟 新增這行：匯入分頁組件
 
 export default function Shop({ auth }) {
     // 定義狀態
@@ -74,29 +76,8 @@ export default function Shop({ auth }) {
         <div className="min-h-screen bg-gray-100">
             <Head title="Momo 商城" />
 
-            {/* 頂部導覽列 */}
-            <nav className="bg-white shadow p-4 mb-6 sticky top-0 z-50">
-                <div className="max-w-7xl mx-auto flex justify-between items-center">
-                    <h1 className="text-2xl font-bold text-pink-600 flex items-center gap-2">
-                        <Link href="/shop">Momo Demo</Link>
-                    </h1>
-
-                    {/* 右邊：會員狀態區 */}
-                    <div className="flex items-center gap-4">
-                        {auth?.user ? (
-                            <>
-                                <span className="text-gray-700 font-medium">Hi, {auth.user.name} 👋</span>
-                                <Link href="/logout" method="post" as="button" className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition">登出</Link>
-                            </>
-                        ) : (
-                            <>
-                                <Link href="/login" className="text-sm text-gray-600 hover:text-pink-600 transition">登入</Link>
-                                <Link href="/register" className="text-sm bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition">註冊</Link>
-                            </>
-                        )}
-                    </div>
-                </div>
-            </nav>
+            {/* 🌟 店長把顧客名單 (auth) 交給迎賓員，讓他去處理門口的事 */}
+            <Navbar auth={auth} />
 
             <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10">
 
@@ -203,27 +184,11 @@ export default function Shop({ auth }) {
 
                             {/* --- 新增：分頁按鈕 --- */}
                             {products.length > 0 && (
-                                <div className="mt-8 flex justify-center items-center gap-4">
-                                    <button
-                                        onClick={() => handlePageChange(page - 1)}
-                                        disabled={page === 1}
-                                        className={`px-4 py-2 rounded border ${page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
-                                    >
-                                        &larr; 上一頁
-                                    </button>
-
-                                    <span className="text-gray-700 font-medium">
-                                        Page {page} of {lastPage}
-                                    </span>
-
-                                    <button
-                                        onClick={() => handlePageChange(page + 1)}
-                                        disabled={page === lastPage}
-                                        className={`px-4 py-2 rounded border ${page === lastPage ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
-                                    >
-                                        下一頁 &rarr;
-                                    </button>
-                                </div>
+                                <Pagination
+                                    page={page}
+                                    lastPage={lastPage}
+                                    onPageChange={handlePageChange}
+                                />
                             )}
                         </>
                     )}
