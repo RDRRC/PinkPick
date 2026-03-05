@@ -4,6 +4,8 @@ import axios from 'axios';
 import { Head } from '@inertiajs/react'; // 保留這一行，同時引入 Head 和 Link
 import Navbar from '../Components/Navbar'; // 🌟 新增這行：把迎賓員請過來！
 import Pagination from '../Components/Pagination'; // 🌟 新增這行：匯入分頁組件
+import FilterSidebar from '../Components/FilterSidebar'; // 🌟 匯入篩選器組件
+import ProductCard from '../Components/ProductCard'; // 🌟 匯入商品卡片組件
 
 export default function Shop({ auth }) {
     // 定義狀態
@@ -82,68 +84,11 @@ export default function Shop({ auth }) {
             <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10">
 
                 {/* 左側篩選欄 */}
-                <aside className="w-full md:w-1/4 bg-white p-6 rounded-lg shadow h-fit sticky top-24">
-                    <h2 className="text-lg font-bold mb-4 border-b pb-2">商品篩選</h2>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">搜尋名稱</label>
-                        <input
-                            type="text"
-                            name="keyword"
-                            value={filters.keyword}
-                            onChange={handleFilterChange}
-                            placeholder="輸入手機、衣服..."
-                            className="w-full border-gray-300 rounded-md shadow-sm focus:border-pink-500 focus:ring-pink-500"
-                        />
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">分類</label>
-                        <select
-                            name="category_id"
-                            onChange={handleFilterChange}
-                            className="w-full border-gray-300 rounded-md shadow-sm"
-                        >
-                            <option value="">所有分類</option>
-                            <option value="2">手機 (ID:2)</option>
-                            <option value="4">上衣 (ID:4)</option>
-                        </select>
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">價格範圍</label>
-                        <div className="flex items-center gap-2">
-                            <input
-                                type="number"
-                                name="price_min"
-                                placeholder="最低"
-                                onChange={handleFilterChange}
-                                className="w-1/2 border-gray-300 rounded-md text-sm"
-                            />
-                            <span>-</span>
-                            <input
-                                type="number"
-                                name="price_max"
-                                placeholder="最高"
-                                onChange={handleFilterChange}
-                                className="w-1/2 border-gray-300 rounded-md text-sm"
-                            />
-                        </div>
-                    </div>
-
-                    <div className="mb-4">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">排序</label>
-                        <select
-                            name="sort"
-                            onChange={handleFilterChange}
-                            className="w-full border-gray-300 rounded-md shadow-sm"
-                        >
-                            <option value="newest">最新上架</option>
-                            <option value="price_asc">價格：低到高</option>
-                            <option value="price_desc">價格：高到低</option>
-                        </select>
-                    </div>
-                </aside>
+                {/* 🌟 呼叫篩選員，並交給他目前的條件(filters)和對講機(handleFilterChange) */}
+                <FilterSidebar
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                />
 
                 {/* 右側商品牆 */}
                 <main className="w-full md:w-3/4">
@@ -151,29 +96,11 @@ export default function Shop({ auth }) {
                         <div className="text-center py-20 text-gray-500">載入中...</div>
                     ) : (
                         <>
+                            {/* 這裡保留了外層的 grid 設定，確保排版不會亂掉 */}
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[500px]">
                                 {products.length > 0 ? (
                                     products.map((product) => (
-                                        <div key={product.id} className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group">
-                                            <div className="h-48 bg-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-gray-300 transition">
-                                                Product Image
-                                            </div>
-                                            <div className="p-4">
-                                                <div className="text-xs text-pink-600 font-bold mb-1">
-                                                    {product.category ? product.category.name : '未分類'}
-                                                </div>
-                                                <h3 className="font-bold text-gray-800 truncate">{product.name}</h3>
-                                                <div className="mt-2 flex justify-between items-center">
-                                                    <span className="text-lg font-bold text-red-600">
-                                                        ${Number(product.price).toLocaleString()}
-                                                    </span>
-                                                    <span className="text-xs text-gray-500">庫存: {product.stock}</span>
-                                                </div>
-                                                <button className="mt-3 w-full bg-pink-600 text-white py-2 rounded text-sm hover:bg-pink-700 transition">
-                                                    加入購物車
-                                                </button>
-                                            </div>
-                                        </div>
+                                        <ProductCard key={product.id} product={product} />
                                     ))
                                 ) : (
                                     <div className="col-span-3 text-center py-10 text-gray-500 bg-white rounded-lg">
@@ -182,7 +109,7 @@ export default function Shop({ auth }) {
                                 )}
                             </div>
 
-                            {/* --- 新增：分頁按鈕 --- */}
+                            {/* --- 分頁按鈕原封不動保留在這裡 --- */}
                             {products.length > 0 && (
                                 <Pagination
                                     page={page}
