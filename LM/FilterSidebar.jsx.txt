@@ -1,0 +1,69 @@
+檔案路徑：resources\js\Components\FilterSidebar.jsx
+
+import React from 'react';
+export default function FilterSidebar({ filters, onFilterChange }) {
+    return (
+        &lt;aside className="w-full md:w-1/4 bg-white p-6 rounded-lg shadow h-fit sticky top-24"&gt;
+            &lt;h2 className="text-lg font-bold mb-4 border-b pb-2"&gt;商品篩選&lt;/h2&gt;
+            &lt;div className="mb-4"&gt;
+                &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;搜尋名稱&lt;/label&gt;
+                &lt;input
+                    type="text"
+                    name="keyword"
+                    value={filters.keyword}
+                    onChange={onFilterChange}
+                    placeholder="輸入手機、衣服..."
+                    className="w-full border-gray-300 rounded-md shadow-sm focus:border-pink-500 focus:ring-pink-500"
+                /&gt;
+            &lt;/div&gt;
+            &lt;div className="mb-4"&gt;
+                &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;分類&lt;/label&gt;
+                &lt;select
+                    name="category_id"
+                    value={filters.category_id} 
+                    onChange={onFilterChange}
+                    className="w-full border-gray-300 rounded-md shadow-sm"
+                &gt;
+                    &lt;option value=""&gt;所有分類&lt;/option&gt;
+                    &lt;option value="2"&gt;手機 (ID:2)&lt;/option&gt;
+                    &lt;option value="4"&gt;上衣 (ID:4)&lt;/option&gt;
+                &lt;/select&gt;
+            &lt;/div&gt;
+            &lt;div className="mb-4"&gt;
+                &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;價格範圍&lt;/label&gt;
+                &lt;div className="flex items-center gap-2"&gt;
+                    &lt;input
+                        type="number"
+                        name="price_min"
+                        value={filters.price_min}
+                        placeholder="最低"
+                        onChange={onFilterChange}
+                        className="w-1/2 border-gray-300 rounded-md text-sm"
+                    /&gt;
+                    &lt;span&gt;-&lt;/span&gt;
+                    &lt;input
+                        type="number"
+                        name="price_max"
+                        value={filters.price_max}
+                        placeholder="最高"
+                        onChange={onFilterChange}
+                        className="w-1/2 border-gray-300 rounded-md text-sm"
+                    /&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+            &lt;div className="mb-4"&gt;
+                &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;排序&lt;/label&gt;
+                &lt;select
+                    name="sort"
+                    value={filters.sort}
+                    onChange={onFilterChange}
+                    className="w-full border-gray-300 rounded-md shadow-sm"
+                &gt;
+                    &lt;option value="newest"&gt;最新上架&lt;/option&gt;
+                    &lt;option value="price_asc"&gt;價格：低到高&lt;/option&gt;
+                    &lt;option value="price_desc"&gt;價格：高到低&lt;/option&gt;
+                &lt;/select&gt;
+            &lt;/div&gt;
+        &lt;/aside&gt;
+    );
+}

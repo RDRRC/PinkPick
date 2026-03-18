@@ -1,0 +1,93 @@
+檔案路徑：resources\js\Pages\Shop.jsx
+
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import { Head } from '@inertiajs/react'; 
+import Navbar from '../Components/Navbar'; 
+import Pagination from '../Components/Pagination'; 
+import FilterSidebar from '../Components/FilterSidebar'; 
+import ProductCard from '../Components/ProductCard'; 
+export default function Shop({ auth }) {
+    const [products, setProducts] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);       
+    const [lastPage, setLastPage] = useState(1); 
+    const [filters, setFilters] = useState({
+        keyword: '',
+        category_id: '',
+        price_min: '',
+        price_max: '',
+        sort: 'newest'
+    });
+    const fetchProducts = async () =&gt; {
+        setLoading(true);
+        try {
+            const response = await axios.get('/api/products', {
+                params: { ...filters, page: page }
+            });
+            setProducts(response.data.payload.data);
+            setLastPage(response.data.last_page);
+        } catch (error) {
+            console.error("無法取得商品:", error);
+        } finally {
+            setLoading(false);
+        }
+    };
+    useEffect(() =&gt; {
+        setPage(1);
+    }, [filters]);
+    useEffect(() =&gt; {
+        const debounce = setTimeout(() =&gt; {
+            fetchProducts();
+        }, 300);
+        return () =&gt; clearTimeout(debounce);
+    }, [page, filters]);
+    const handleFilterChange = (e) =&gt; {
+        const { name, value } = e.target;
+        setFilters(prev =&gt; ({ ...prev, [name]: value }));
+    };
+    const handlePageChange = (newPage) =&gt; {
+        if (newPage &gt;= 1 && newPage &lt;= lastPage) {
+            setPage(newPage);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    };
+    return (
+        &lt;div className="min-h-screen bg-gray-100"&gt;
+            &lt;Head title="Momo 商城" /&gt;
+            &lt;Navbar auth={auth} /&gt;
+            &lt;div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10"&gt;
+                &lt;FilterSidebar
+                    filters={filters}
+                    onFilterChange={handleFilterChange}
+                /&gt;
+                &lt;main className="w-full md:w-3/4"&gt;
+                    {loading ? (
+                        &lt;div className="text-center py-20 text-gray-500"&gt;載入中...&lt;/div&gt;
+                    ) : (
+                        &lt;&gt;
+                            &lt;div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[500px]"&gt;
+                                {products.length &gt; 0 ? (
+                                    products.map((product) =&gt; (
+                                        &lt;ProductCard key={product.id} product={product} /&gt;
+                                    ))
+                                ) : (
+                                    &lt;div className="col-span-3 text-center py-10 text-gray-500 bg-white rounded-lg"&gt;
+                                        沒有找到符合條件的商品
+                                    &lt;/div&gt;
+                                )}
+                            &lt;/div&gt;
+                            {products.length &gt; 0 && (
+                                &lt;Pagination
+                                    page={page}
+                                    lastPage={lastPage}
+                                    onPageChange={handlePageChange}
+                                /&gt;
+                            )}
+                        &lt;/&gt;
+                    )}
+                &lt;/main&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    );
+}

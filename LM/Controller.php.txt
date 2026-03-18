@@ -1,7 +1,6 @@
-<?php
+檔案路徑：app\Http\Controllers\Controller.php
 
 namespace App\Http\Controllers;
-
 abstract class Controller
 {
     public function sendResponse($payload, $message = '操作成功')
@@ -16,8 +15,8 @@ abstract class Controller
     {
         return response()->json([
             'success'   => false,
-            'message'   => $errorMessages,  // 給人類看的清楚說明
-            'errorCode' => $errorCode,      // 給 React 程式判斷用的代碼
+            'message'   => $errorMessages,  
+            'errorCode' => $errorCode,      
         ], $code);
     }
 }

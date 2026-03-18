@@ -1,0 +1,26 @@
+檔案路徑：resources\js\Components\Pagination.jsx
+
+import React from 'react';
+export default function Pagination({ page, lastPage, onPageChange }) {
+    return (
+        &lt;div className="mt-8 flex justify-center items-center gap-4"&gt;
+            &lt;button
+                onClick={() =&gt; onPageChange(page - 1)} 
+                disabled={page === 1}
+                className={`px-4 py-2 rounded border ${page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+            &gt;
+                &larr; 上一頁
+            &lt;/button&gt;
+            &lt;span className="text-gray-700 font-medium"&gt;
+                Page {page} of {lastPage}
+            &lt;/span&gt;
+            &lt;button
+                onClick={() =&gt; onPageChange(page + 1)} 
+                disabled={page === lastPage}
+                className={`px-4 py-2 rounded border ${page === lastPage ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+            &gt;
+                下一頁 &rarr;
+            &lt;/button&gt;
+        &lt;/div&gt;
+    );
+}

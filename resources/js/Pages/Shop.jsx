@@ -36,10 +36,10 @@ export default function Shop({ auth }) {
 
             // Laravel 的 paginate() 回傳結構：data (商品), meta (分頁資訊)
             // Axios 的 response.data 才是 Laravel 回傳的完整 JSON
-            setProducts(response.data.data);
+            setProducts(response.data.payload.data);
 
             // 更新總頁數 (從 Laravel 回傳的 last_page 取得)
-            setLastPage(response.data.last_page);
+            setLastPage(response.data.payload.last_page);
 
         } catch (error) {
             console.error("無法取得商品:", error);

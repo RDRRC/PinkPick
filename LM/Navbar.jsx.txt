@@ -1,0 +1,28 @@
+檔案路徑：resources\js\Components\Navbar.jsx
+
+import React from 'react';
+import { Link } from '@inertiajs/react'; 
+export default function Navbar({ auth }) {
+    return (
+        &lt;nav className="bg-white shadow p-4 mb-6 sticky top-0 z-50"&gt;
+            &lt;div className="max-w-7xl mx-auto flex justify-between items-center"&gt;
+                &lt;h1 className="text-2xl font-bold text-pink-600 flex items-center gap-2"&gt;
+                    &lt;Link href="/shop"&gt;Momo Demo&lt;/Link&gt;
+                &lt;/h1&gt;
+                &lt;div className="flex items-center gap-4"&gt;
+                    {auth?.user ? (
+                        &lt;&gt;
+                            &lt;span className="text-gray-700 font-medium"&gt;Hi, {auth.user.name} 👋&lt;/span&gt;
+                            &lt;Link href="/logout" method="post" as="button" className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition"&gt;登出&lt;/Link&gt;
+                        &lt;/&gt;
+                    ) : (
+                        &lt;&gt;
+                            &lt;Link href="/login" className="text-sm text-gray-600 hover:text-pink-600 transition"&gt;登入&lt;/Link&gt;
+                            &lt;Link href="/register" className="text-sm bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition"&gt;註冊&lt;/Link&gt;
+                        &lt;/&gt;
+                    )}
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/nav&gt;
+    );
+}
