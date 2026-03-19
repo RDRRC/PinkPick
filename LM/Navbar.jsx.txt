@@ -7,7 +7,7 @@ export default function Navbar({ auth }) {
         &lt;nav className="bg-white shadow p-4 mb-6 sticky top-0 z-50"&gt;
             &lt;div className="max-w-7xl mx-auto flex justify-between items-center"&gt;
                 &lt;h1 className="text-2xl font-bold text-pink-600 flex items-center gap-2"&gt;
-                    &lt;Link href="/shop"&gt;Momo Demo&lt;/Link&gt;
+                    &lt;Link href="/shop"&gt;PinkPick Demo&lt;/Link&gt;
                 &lt;/h1&gt;
                 &lt;div className="flex items-center gap-4"&gt;
                     {auth?.user ? (

@@ -7,7 +7,7 @@ export default function Navbar({ auth }) {
         <nav className="bg-white shadow p-4 mb-6 sticky top-0 z-50">
             <div className="max-w-7xl mx-auto flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-pink-600 flex items-center gap-2">
-                    <Link href="/shop">Momo Demo</Link>
+                    <Link href="/shop">PinkPick Demo</Link>
                 </h1>
 
                 {/* 右邊：會員狀態區 */}
