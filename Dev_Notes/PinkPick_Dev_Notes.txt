@@ -1,0 +1,27 @@
+================================================================
+app\Http\Controllers\ProductController.php
+================================================================
+
+// 暫時註解原本的成功回傳
+// return $this->sendResponse($products, '商品列表取得成功');
+
+// 測試情境一：傳入陣列，並指定狀態碼為 422
+return $this->sendError(
+    ['keyword' => ['搜尋關鍵字包含無效字元', '關鍵字太長']], 
+    422, 
+    'VALIDATION_FAILED'
+);
+
+// 測試情境二：傳入字串，使用預設的 404 狀態碼
+return $this->sendError(
+    '您搜尋的分類目前已經下架囉！', 
+    404, 
+    'CATEGORY_NOT_FOUND'
+);
+
+// 測試情境三：模擬 Laravel 底層拋出帶有敏感資訊的 500 錯誤
+return response()->json([
+    'message' => 'SQLSTATE[HY000] Access denied for user root@localhost...'
+], 500);
+
+================================================================
