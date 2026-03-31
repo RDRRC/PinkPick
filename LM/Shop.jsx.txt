@@ -26,7 +26,7 @@ export default function Shop({ auth }) {
                 params: { ...filters, page: page }
             });
             setProducts(response.data.payload.data);
-            setLastPage(response.data.last_page);
+            setLastPage(response.data.payload.last_page);
         } catch (error) {
             console.error("無法取得商品:", error);
         } finally {
@@ -54,7 +54,7 @@ export default function Shop({ auth }) {
     };
     return (
         &lt;div className="min-h-screen bg-gray-100"&gt;
-            &lt;Head title="Momo 商城" /&gt;
+            &lt;Head title="PinkPick" /&gt;
             &lt;Navbar auth={auth} /&gt;
             &lt;div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10"&gt;
                 &lt;FilterSidebar

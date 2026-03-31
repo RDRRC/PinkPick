@@ -1,0 +1,47 @@
+📝 PinkPick 購物網專案架構與進度總結 (最新版)
+
+一、 專案基本資訊
+*  專案名稱： PinkPick Shopping Network (Demo)
+*  開發目標： 針對求職面試開發的電商作品，展示全端開發能力與解決技術難題的思路。
+*  更新日期： 2026-03-31
+*  核心技術棧： 後端 Laravel 11.x + 前端 React + 橋樑 Inertia.js + 打包工具 Vite。
+*  開發與資料庫環境： 使用 Laragon 作為本地整合伺服器。MySQL 資料庫目前包含 80 筆 Seeded 商品測試資料。
+
+二、 本地開發環境配置與角色總結 (Laragon)
+1. Laragon 是什麼？
+    *  專案使用的「本地伺服器環境 (Local Web Server)」，將 PHP、MySQL、Apache/Nginx 與 Node.js 打包在一起，為 Laravel + React 提供地基。
+2. Laragon 負責的三大核心工作：
+    *  自動生成本地網域： 自動將 www 內的 pinkpick 專案映射成專屬網址。訪問路徑為 http://pinkpick.test。
+    *  資料庫代管與圖形化： 背景運行 MySQL，並透過面板的「Database」按鈕開啟管理工具 (檢視 products、users 等實體貨架內容)。
+    *  提供整合式終端機： 在專案路徑執行兩大指令系統。
+        *  後端指令：php artisan ... (資料庫遷移、建立 Controller)。
+        *  前端指令：npm run dev (啟動 Vite 伺服器，負責 React HMR 熱更新，未啟動會卡在 build 快取)。
+3. 開發 SOP (標準啟動流程)
+    *  步驟一： 打開 Laragon 軟體，點擊「Start All」，確保 Apache 和 MySQL 服務正常亮起。
+    *  步驟二： 開啟終端機，確保路徑位於 pinkpick 專案目錄下。
+    *  步驟三： 輸入 npm run dev 啟動前端即時編譯，並保持終端機開啟。(💡若需讓同網域的同學測試連線，需改輸入 npm run dev -- --host)
+    *  步驟四： 瀏覽器開啟 http://pinkpick.test/shop 開始測試與開發。
+
+三、 目前具備的核心功能與架構 (Current Features)
+*  前端模組化架構： Shop.jsx 擔任容器，將 Navbar、FilterSidebar、Pagination 與 ProductCard 抽離為獨立子組件。
+*  會員與 UI 狀態： 透過 Inertia 全域 auth Props 判斷登入狀態，即時切換導覽列 UI；登出入與註冊統一跳轉回商城首頁 /shop。
+*  商品動態檢索系統： 串接 Laravel Query Builder，支援商品動態篩選 (分類、價格)、排序與分頁。
+*  元件溝通機制： 熟練運用 React Callbacks 達成子組件 (如分頁、篩選器) 向上傳遞資料至 Shop 容器，並觸發後端 API 更新。
+*  進階資料庫與 ORM 設計： 運用 Laravel Eloquent ORM 建立完善的關聯模型，並透過 Attribute 與 AttributeValue 實現高擴充性的商品動態規格 (EAV 模式) 設計。
+
+四、 開發日誌與時序紀錄 (Changelog)
+*  [模組重構] 成功將臃腫的 Shop.jsx 進行模組化拆分，獨立出頂部導覽列、側邊欄、分頁與商品卡片組件。
+*  [UI 整合與優化]
+    *  導覽列整合後端 Session 狀態切換登入按鈕。
+    *  覆寫 Laravel Breeze 預設跳轉邏輯回 /shop。
+    *  在登入/註冊頁新增回首頁的逃生路線 (Escape Hatch)。
+    *  確立 Vite 開發環境的 HMR 熱更新機制。
+*  [核心功能打通] 完成前端商品網格與篩選器，並與後端 API 的動態篩選、排序、分頁邏輯成功串接。
+
+五、 下一步待辦清單 (To-Do)
+*  階段一：後端 API 基礎建設 (Base Controller) 在基底 Controller.php 中實作共用的 sendResponse (成功回傳) 與 sendError (錯誤回傳) 方法，統一所有 API 的 JSON 資料結構。
+*  階段二：前端錯誤攔截與 UI 呈現 實作前端 API 錯誤處理機制（搭配階段一的格式，在 Axios 請求失敗時，透過 React 的 useState 將錯誤訊息顯示在畫面上）。
+*  階段三：核心業務功能實作 準備開發「加入購物車」的狀態管理與後端 API（後端 API 需套用階段一的共用回傳方法）。
+
+六、 目前遇到的困難或想探討的問題 (Blockers / Questions)
+*  (目前暫無，隨時補充)

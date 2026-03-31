@@ -76,7 +76,7 @@ export default function Shop({ auth }) {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            <Head title="Momo 商城" />
+            <Head title="PinkPick" />
 
             {/* 🌟 店長把顧客名單 (auth) 交給迎賓員，讓他去處理門口的事 */}
             <Navbar auth={auth} />
