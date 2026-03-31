@@ -2,16 +2,16 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Head } from '@inertiajs/react'; 
-import Navbar from '../Components/Navbar'; 
-import Pagination from '../Components/Pagination'; 
-import FilterSidebar from '../Components/FilterSidebar'; 
-import ProductCard from '../Components/ProductCard'; 
+import { Head } from '@inertiajs/react';
+import Navbar from '../Components/Navbar';
+import Pagination from '../Components/Pagination';
+import FilterSidebar from '../Components/FilterSidebar';
+import ProductCard from '../Components/ProductCard';
 export default function Shop({ auth }) {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [page, setPage] = useState(1);       
-    const [lastPage, setLastPage] = useState(1); 
+    const [page, setPage] = useState(1);
+    const [lastPage, setLastPage] = useState(1);
     const [filters, setFilters] = useState({
         keyword: '',
         category_id: '',
@@ -19,8 +19,10 @@ export default function Shop({ auth }) {
         price_max: '',
         sort: 'newest'
     });
+    const [errorMessage, setErrorMessage] = useState(null);
     const fetchProducts = async () =&gt; {
         setLoading(true);
+        setErrorMessage(null); 
         try {
             const response = await axios.get('/api/products', {
                 params: { ...filters, page: page }
@@ -28,6 +30,29 @@ export default function Shop({ auth }) {
             setProducts(response.data.payload.data);
             setLastPage(response.data.payload.last_page);
         } catch (error) {
+            const response = error.response;
+            if (!response) {
+                setErrorMessage("網路連線異常，請檢查您的網路狀態。");
+                console.error("無法取得商品 (Network/CORS):", error);
+                return;
+            }
+            const responseData = response.data;
+            const statusCode = response.status;
+            if (statusCode &gt;= 500) {
+                setErrorMessage("伺服器發生異常，我們正在緊急處理中，請稍後再試。");
+                return;
+            }
+            if (responseData && responseData.message) {
+                if (typeof responseData.message === 'object') {
+                    const firstErrorString = Object.values(responseData.message).flat()[0];
+                    setErrorMessage(firstErrorString || "資料驗證失敗，請檢查輸入內容。");
+                }
+                else if (typeof responseData.message === 'string') {
+                    setErrorMessage(responseData.message);
+                }
+            } else {
+                setErrorMessage("無法取得商品，發生未知錯誤。");
+            }
             console.error("無法取得商品:", error);
         } finally {
             setLoading(false);
@@ -54,7 +79,7 @@ export default function Shop({ auth }) {
     };
     return (
         &lt;div className="min-h-screen bg-gray-100"&gt;
-            &lt;Head title="PinkPick" /&gt;
+            &lt;Head title="PinkPick 商城" /&gt;
             &lt;Navbar auth={auth} /&gt;
             &lt;div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10"&gt;
                 &lt;FilterSidebar
@@ -62,6 +87,25 @@ export default function Shop({ auth }) {
                     onFilterChange={handleFilterChange}
                 /&gt;
                 &lt;main className="w-full md:w-3/4"&gt;
+                    {errorMessage && (
+                        &lt;div
+                            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 flex justify-between items-center shadow-sm"
+                            role="alert"
+                        &gt;
+                            &lt;div className="flex items-center"&gt;
+                                &lt;svg className="w-5 h-5 mr-2 fill-current" viewBox="0 0 20 20"&gt;
+                                    &lt;path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" fillRule="evenodd"&gt;&lt;/path&gt;
+                                &lt;/svg&gt;
+                                &lt;span className="block sm:inline"&gt;{errorMessage}&lt;/span&gt;
+                            &lt;/div&gt;
+                            &lt;button
+                                onClick={() =&gt; setErrorMessage(null)}
+                                className="text-red-700 hover:text-red-900 font-bold focus:outline-none"
+                            &gt;
+                                ✕
+                            &lt;/button&gt;
+                        &lt;/div&gt;
+                    )}
                     {loading ? (
                         &lt;div className="text-center py-20 text-gray-500"&gt;載入中...&lt;/div&gt;
                     ) : (

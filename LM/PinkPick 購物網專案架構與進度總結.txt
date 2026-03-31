@@ -1,0 +1,54 @@
+============================================================
+📝 PinkPick 購物網專案架構與進度總結 (企業級協作版)
+============================================================
+
+一、 專案基本資訊
+- 專案名稱：PinkPick Shopping Network (Demo)
+- 開發目標：展示全端開發能力，針對求職面試設計。
+- 更新日期：2026-03-31
+- 技術棧：Laravel 11.x + React + Inertia.js + Vite
+- 開發環境：Laragon (PHP 8.x, MySQL, Apache)
+- 資料庫現況：MySQL 已建立，包含約 80 筆 Seeded 商品測試資料，供分頁與篩選測試。
+
+二、 本地開發環境配置 (Laragon)
+1. 核心工作：自動生成 http://pinkpick.test 網域、管理 MySQL。
+2. 開發 SOP：
+   - 啟動 Laragon (Start All)。
+   - 終端機執行 npm run dev (啟動 Vite 熱更新)。
+   - 瀏覽器訪問商城首頁。
+
+三、 目前具備的核心功能與架構 (Current Features)
+- 前端模組化：Shop.jsx 擔任容器，將 Navbar, FilterSidebar, Pagination, ProductCard 抽離。
+- 元件溝通機制：熟練運用 React Callbacks 達成子組件向上傳遞資料，並觸發 API 更新。
+- 認證跳轉邏輯：已覆寫 Laravel Breeze 預設路徑，登入/註冊/登出統一導回 /shop。
+- API 標準化：父類別 Controller 實作 sendResponse 與 sendError，統一 JSON 回傳結構。
+- 進階資料庫設計 (重要)：採用 EAV 模式 (Attributes & AttributeValues) 實作動態商品規格，具備高擴充性。
+- 進階防禦機制：實作錯誤攔截，具備「物件型別檢查 (防白畫面)」與「500 錯誤遮蔽」。
+
+四、 開發日誌與時序紀錄 (Changelog)
+- [2026-03-31] 完成階段二：前端錯誤攔截與 UI 呈現。
+  - 實作 errorMessage 狀態，自動拆解 Validation 陣列並提取首筆訊息。
+  - 建立資安防護：攔截 500 錯誤並隱藏底層 SQL 資訊。
+- [2026-03-25] 完成階段一：後端 API 基礎建設。
+  - 統一 API 格式：{ success, payload/message, errorCode }。
+- [前期紀錄] 成功將 Shop.jsx 重構模組化，並打通動態篩選、排序與分頁邏輯。
+
+五、 下一步待辦清單 (To-Do)
+- 階段三：核心業務功能實作 (加入購物車)
+  - 設計購物車資料表 (Cart Items) 與 API。
+  - 購物車邏輯需支援 EAV 規格選取（如顏色、尺寸）。
+  - 實作前端購物車狀態管理 (Context 或 Zustand)。
+
+六、 目前遇到的困難或問題 (Blockers)
+- (目前暫無)
+
+七、 開發規範與 AI 協作 (Developer Standards)
+1. 程式碼清洗規則 (LM Source Optimization)：
+   - 為優化讀取效能，送入 AI 的代碼會移除所有單行註解 (//) 與測試代碼。
+   - 註解說明：原始開發檔均保留完整註解，僅在對話來源中隱蔽。
+2. 解析器瑕疵預防針 (Parser Protection)：
+   - 注意：清洗工具可能導致「註解消失」、「未使用的變數被移除」、「測試用報錯代碼被刪除」。
+   - AI 指引：若發現代碼邏輯不連貫，請參考專案日誌或要求讀取測試備忘錄。
+3. 測試備忘錄 (Manual Test Snippets)：
+   - 專案內維護 PinkPick_Dev_Notes.txt，存放手動觸發 422、500 等情境的測試代碼片段。
+============================================================
