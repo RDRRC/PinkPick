@@ -1,0 +1,62 @@
+檔案路徑：app\Http\Controllers\CartController.php
+
+namespace App\Http\Controllers;
+use App\Models\CartItem;
+use App\Models\Product;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth; 
+use Illuminate\Database\UniqueConstraintViolationException;
+class CartController extends Controller
+{
+    public function index(Request $request)
+    {
+        $userId = Auth::id();
+        $sessionId = $request->session()->getId();
+        $query = CartItem::with(['product']);
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } else {
+            $query->where('session_id', $sessionId)->whereNull('user_id');
+        }
+        $cartItems = $query->get();
+        return $this->sendResponse($cartItems, '購物車內容取得成功');
+    }
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'product_id' => 'required|exists:products,id',
+            'quantity' => 'integer|min:1',
+            'selected_attributes' => 'nullable|array',
+        ]);
+        $attributes = $validated['selected_attributes'] ?? [];
+        if (!empty($attributes)) {
+            $product = Product::findOrFail($validated['product_id']);
+            $validValueIds = $product->attributes()->pluck('id')->toArray();
+            foreach ($attributes as $attrId => $valueId) {
+                if (!in_array($valueId, $validValueIds)) {
+                    return $this->sendError('選擇的商品規格無效或已被移除', 400, 'INVALID_ATTRIBUTE');
+                }
+            }
+        }
+        $userId = Auth::id();
+        $sessionId = $request->session()->getId();
+        ksort($attributes);
+        $identifier = $userId ? "U_{$userId}" : "S_{$sessionId}";
+        $hashString = "{$identifier}_{$validated['product_id']}_" . json_encode($attributes);
+        $itemHash = hash('sha256', $hashString);
+        try {
+            CartItem::create([
+                'user_id' => $userId,
+                'session_id' => $userId ? null : $sessionId,
+                'product_id' => $validated['product_id'],
+                'quantity' => $validated['quantity'] ?? 1,
+                'selected_attributes' => $attributes,
+                'item_hash' => $itemHash,
+            ]);
+        } catch (UniqueConstraintViolationException $e) {
+            CartItem::where('item_hash', $itemHash)
+                ->increment('quantity', $validated['quantity'] ?? 1);
+        }
+        return $this->sendResponse(null, '商品已成功加入購物車');
+    }
+}

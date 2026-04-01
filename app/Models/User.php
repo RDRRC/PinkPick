@@ -45,7 +45,9 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-
+    /**
+     * 關聯：使用者擁有多個購物車明細
+     */
     public function cartItems()
     {
         return $this->hasMany(CartItem::class);
