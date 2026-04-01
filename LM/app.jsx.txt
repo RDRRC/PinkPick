@@ -1,29 +1,24 @@
+檔案路徑：resources\js\app.jsx
+
 import './bootstrap';
 import '../css/app.css';
-
 import { createRoot } from 'react-dom/client';
 import { createInertiaApp } from '@inertiajs/react';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
-
-// 1. 引入剛剛寫好的 Provider
 import { CartProvider } from './Contexts/CartContext';
-
 const appName = import.meta.env.VITE_APP_NAME || 'PinkPick';
-
 createInertiaApp({
-    title: (title) => `${title} - ${appName}`,
-    resolve: (name) => resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages/**/*.jsx')),
+    title: (title) =&gt; `${title} - ${appName}`,
+    resolve: (name) =&gt; resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages*.jsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
-
         root.render(
-            // 2. 用 CartProvider 包覆整個 Inertia App
-            <CartProvider>
-                <App {...props} />
-            </CartProvider>
+            &lt;CartProvider&gt;
+                &lt;App {...props} /&gt;
+            &lt;/CartProvider&gt;
         );
     },
     progress: {
-        color: '#db2777', // 配合 PinkPick 主題色
+        color: '#db2777', 
     },
 });

@@ -1,0 +1,50 @@
+檔案路徑：resources\js\Contexts\CartContext.jsx
+
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import axios from 'axios';
+import { router } from '@inertiajs/react'; 
+const CartContext = createContext();
+export function CartProvider({ children }) {
+    const [cartItems, setCartItems] = useState([]);
+    const [cartCount, setCartCount] = useState(0);
+    const fetchCart = async () =&gt; {
+        try {
+            const response = await axios.get('/cart');
+            const items = response.data.payload;
+            setCartItems(items);
+            const count = items.reduce((total, item) =&gt; total + item.quantity, 0);
+            setCartCount(count);
+        } catch (error) {
+            console.error("無法取得購物車資料:", error);
+        }
+    };
+    const addToCart = async (productId, quantity = 1, selectedAttributes = {}) =&gt; {
+        try {
+            const response = await axios.post('/cart', {
+                product_id: productId,
+                quantity: quantity,
+                selected_attributes: selectedAttributes
+            });
+            await fetchCart();
+            return { success: true, message: response.data.message };
+        } catch (error) {
+            console.error("加入購物車失敗:", error);
+            throw error;
+        }
+    };
+    useEffect(() =&gt; {
+        fetchCart();
+        const removeListener = router.on('success', () =&gt; {
+            fetchCart();
+        });
+        return () =&gt; removeListener();
+    }, []);
+    return (
+        &lt;CartContext.Provider value={{ cartItems, cartCount, fetchCart, addToCart }}&gt;
+            {children}
+        &lt;/CartContext.Provider&gt;
+    );
+}
+export function useCart() {
+    return useContext(CartContext);
+}
