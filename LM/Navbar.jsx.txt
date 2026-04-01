@@ -1,26 +1,52 @@
 檔案路徑：resources\js\Components\Navbar.jsx
 
 import React from 'react';
-import { Link } from '@inertiajs/react'; 
-export default function Navbar({ auth }) {
+import { Link, usePage } from '@inertiajs/react'; 
+import { useCart } from '../Contexts/CartContext';
+export default function Navbar() {
+    const { auth } = usePage().props;
+    const { cartCount } = useCart();
     return (
         &lt;nav className="bg-white shadow p-4 mb-6 sticky top-0 z-50"&gt;
             &lt;div className="max-w-7xl mx-auto flex justify-between items-center"&gt;
                 &lt;h1 className="text-2xl font-bold text-pink-600 flex items-center gap-2"&gt;
                     &lt;Link href="/shop"&gt;PinkPick Demo&lt;/Link&gt;
                 &lt;/h1&gt;
-                &lt;div className="flex items-center gap-4"&gt;
-                    {auth?.user ? (
-                        &lt;&gt;
-                            &lt;span className="text-gray-700 font-medium"&gt;Hi, {auth.user.name} 👋&lt;/span&gt;
-                            &lt;Link href="/logout" method="post" as="button" className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition"&gt;登出&lt;/Link&gt;
-                        &lt;/&gt;
-                    ) : (
-                        &lt;&gt;
-                            &lt;Link href="/login" className="text-sm text-gray-600 hover:text-pink-600 transition"&gt;登入&lt;/Link&gt;
-                            &lt;Link href="/register" className="text-sm bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition"&gt;註冊&lt;/Link&gt;
-                        &lt;/&gt;
-                    )}
+                &lt;div className="flex items-center gap-6"&gt;
+                    &lt;Link href="/cart" className="relative flex items-center text-gray-600 hover:text-pink-600 transition"&gt;
+                        &lt;svg
+                            className="w-6 h-6"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                            xmlns="http://www.w3.org/2000/svg"
+                        &gt;
+                            &lt;path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
+                            &gt;&lt;/path&gt;
+                        &lt;/svg&gt;
+                        {cartCount &gt; 0 && (
+                            &lt;span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full border-2 border-white shadow-sm"&gt;
+                                {cartCount &gt; 99 ? '99+' : cartCount}
+                            &lt;/span&gt;
+                        )}
+                    &lt;/Link&gt;
+                    &lt;div className="flex items-center gap-4 border-l pl-4 border-gray-200"&gt;
+                        {auth?.user ? (
+                            &lt;&gt;
+                                &lt;span className="text-gray-700 font-medium"&gt;Hi, {auth.user.name} 👋&lt;/span&gt;
+                                &lt;Link href="/logout" method="post" as="button" className="text-sm bg-gray-200 px-3 py-1 rounded hover:bg-gray-300 transition"&gt;登出&lt;/Link&gt;
+                            &lt;/&gt;
+                        ) : (
+                            &lt;&gt;
+                                &lt;Link href="/login" className="text-sm text-gray-600 hover:text-pink-600 transition"&gt;登入&lt;/Link&gt;
+                                &lt;Link href="/register" className="text-sm bg-pink-600 text-white px-4 py-2 rounded hover:bg-pink-700 transition"&gt;註冊&lt;/Link&gt;
+                            &lt;/&gt;
+                        )}
+                    &lt;/div&gt;
                 &lt;/div&gt;
             &lt;/div&gt;
         &lt;/nav&gt;

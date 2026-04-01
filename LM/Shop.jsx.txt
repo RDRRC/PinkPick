@@ -7,7 +7,7 @@ import Navbar from '../Components/Navbar';
 import Pagination from '../Components/Pagination';
 import FilterSidebar from '../Components/FilterSidebar';
 import ProductCard from '../Components/ProductCard';
-export default function Shop({ auth }) {
+export default function Shop() {
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -80,7 +80,7 @@ export default function Shop({ auth }) {
     return (
         &lt;div className="min-h-screen bg-gray-100"&gt;
             &lt;Head title="PinkPick 商城" /&gt;
-            &lt;Navbar auth={auth} /&gt;
+            &lt;Navbar /&gt;
             &lt;div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10"&gt;
                 &lt;FilterSidebar
                     filters={filters}

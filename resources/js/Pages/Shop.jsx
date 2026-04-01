@@ -6,7 +6,7 @@ import Pagination from '../Components/Pagination';
 import FilterSidebar from '../Components/FilterSidebar';
 import ProductCard from '../Components/ProductCard';
 
-export default function Shop({ auth }) {
+export default function Shop() {
     // 1. 原本的狀態保留
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -108,7 +108,7 @@ export default function Shop({ auth }) {
             {/* 這裡順手幫您更新為 PinkPick */}
             <Head title="PinkPick 商城" />
 
-            <Navbar auth={auth} />
+            <Navbar />
 
             <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10">
                 <FilterSidebar

@@ -1,27 +1,156 @@
 檔案路徑：resources\js\Components\ProductCard.jsx
 
-import React from 'react';
+import React, { useState } from 'react';
+import { useCart } from '../Contexts/CartContext';
 export default function ProductCard({ product }) {
+    const { addToCart } = useCart();
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedOptions, setSelectedOptions] = useState({});
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [localError, setLocalError] = useState(null);
+    const groupedAttributes = product.attributes?.reduce((acc, attr) =&gt; {
+        const groupId = attr.attribute_id;
+        if (!acc[groupId]) {
+            acc[groupId] = {
+                name: attr.attribute?.name || `規格 ${groupId}`,
+                values: []
+            };
+        }
+        acc[groupId].values.push(attr);
+        return acc;
+    }, {}) || {};
+    const hasAttributes = Object.keys(groupedAttributes).length &gt; 0;
+    const handleInitialAdd = (e) =&gt; {
+        e.preventDefault();
+        e.stopPropagation();
+        if (product.stock &lt;= 0) return;
+        if (hasAttributes) {
+            setIsModalOpen(true);
+        } else {
+            executeAddToCart({});
+        }
+    };
+    const handleOptionChange = (e, attributeId, valueId) =&gt; {
+        e.preventDefault();
+        e.stopPropagation();
+        setSelectedOptions(prev =&gt; ({
+            ...prev,
+            [attributeId]: Number(valueId)
+        }));
+        setLocalError(null);
+    };
+    const executeAddToCart = async (attributesPayload) =&gt; {
+        setIsSubmitting(true);
+        setLocalError(null);
+        try {
+            await addToCart(product.id, 1, attributesPayload);
+            setIsModalOpen(false);
+            setSelectedOptions({});
+        } catch (error) {
+            const msg = error.response?.data?.message || "加入購物車失敗，請稍後再試";
+            setLocalError(msg);
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    const handleConfirmAdd = (e) =&gt; {
+        e.preventDefault();
+        e.stopPropagation();
+        const requiredGroupsCount = Object.keys(groupedAttributes).length;
+        const selectedGroupsCount = Object.keys(selectedOptions).length;
+        if (requiredGroupsCount !== selectedGroupsCount) {
+            setLocalError("請完整選擇所有商品規格");
+            return;
+        }
+        executeAddToCart(selectedOptions);
+    };
+    const handleCloseModal = (e) =&gt; {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsModalOpen(false);
+    };
     return (
-        &lt;div className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group"&gt;
+        &lt;div className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group relative flex flex-col h-full"&gt;
             &lt;div className="h-48 bg-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-gray-300 transition"&gt;
                 Product Image
             &lt;/div&gt;
-            &lt;div className="p-4"&gt;
+            &lt;div className="p-4 flex flex-col flex-grow"&gt;
                 &lt;div className="text-xs text-pink-600 font-bold mb-1"&gt;
                     {product.category ? product.category.name : '未分類'}
                 &lt;/div&gt;
                 &lt;h3 className="font-bold text-gray-800 truncate"&gt;{product.name}&lt;/h3&gt;
-                &lt;div className="mt-2 flex justify-between items-center"&gt;
+                &lt;div className="mt-2 flex justify-between items-center mb-4"&gt;
                     &lt;span className="text-lg font-bold text-red-600"&gt;
                         ${Number(product.price).toLocaleString()}
                     &lt;/span&gt;
-                    &lt;span className="text-xs text-gray-500"&gt;庫存: {product.stock}&lt;/span&gt;
+                    &lt;span className={`text-xs ${product.stock &gt; 0 ? 'text-gray-500' : 'text-red-500 font-bold'}`}&gt;
+                        {product.stock &gt; 0 ? `庫存: ${product.stock}` : '已售完'}
+                    &lt;/span&gt;
                 &lt;/div&gt;
-                &lt;button className="mt-3 w-full bg-pink-600 text-white py-2 rounded text-sm hover:bg-pink-700 transition"&gt;
-                    加入購物車
+                &lt;button
+                    onClick={handleInitialAdd}
+                    disabled={product.stock &lt;= 0 || isSubmitting}
+                    className={`mt-auto w-full py-2 rounded text-sm transition font-bold ${product.stock &gt; 0
+                            ? 'bg-pink-600 text-white hover:bg-pink-700 disabled:bg-pink-400'
+                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        }`}
+                &gt;
+                    {isSubmitting ? '處理中...' : (product.stock &gt; 0 ? '加入購物車' : '補貨中')}
                 &lt;/button&gt;
             &lt;/div&gt;
+            {isModalOpen && (
+                &lt;div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
+                    onClick={handleCloseModal} 
+                &gt;
+                    &lt;div
+                        className="bg-white rounded-lg p-6 w-11/12 max-w-md shadow-xl relative"
+                        onClick={(e) =&gt; e.stopPropagation()} 
+                    &gt;
+                        &lt;button
+                            onClick={handleCloseModal}
+                            className="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-xl font-bold"
+                        &gt;
+                            ✕
+                        &lt;/button&gt;
+                        &lt;h2 className="text-xl font-bold mb-4 text-gray-800"&gt;選擇商品規格&lt;/h2&gt;
+                        &lt;p className="text-sm text-gray-500 mb-4"&gt;{product.name}&lt;/p&gt;
+                        {Object.entries(groupedAttributes).map(([attrId, group]) =&gt; (
+                            &lt;div key={attrId} className="mb-4"&gt;
+                                &lt;label className="block text-sm font-medium text-gray-700 mb-2"&gt;
+                                    {group.name}
+                                &lt;/label&gt;
+                                &lt;div className="flex flex-wrap gap-2"&gt;
+                                    {group.values.map((val) =&gt; (
+                                        &lt;button
+                                            key={val.id}
+                                            onClick={(e) =&gt; handleOptionChange(e, attrId, val.id)}
+                                            className={`px-4 py-2 border rounded-md text-sm transition ${selectedOptions[attrId] === val.id
+                                                    ? 'bg-pink-600 text-white border-pink-600 font-bold'
+                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-pink-500'
+                                                }`}
+                                        &gt;
+                                            {val.value}
+                                        &lt;/button&gt;
+                                    ))}
+                                &lt;/div&gt;
+                            &lt;/div&gt;
+                        ))}
+                        {localError && (
+                            &lt;div className="mb-4 p-2 bg-red-100 text-red-700 text-sm rounded border border-red-200"&gt;
+                                {localError}
+                            &lt;/div&gt;
+                        )}
+                        &lt;button
+                            onClick={handleConfirmAdd}
+                            disabled={isSubmitting}
+                            className="w-full mt-4 bg-pink-600 text-white py-2 rounded font-bold hover:bg-pink-700 disabled:bg-pink-400"
+                        &gt;
+                            {isSubmitting ? '加入中...' : '確認加入'}
+                        &lt;/button&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            )}
         &lt;/div&gt;
     );
 }
