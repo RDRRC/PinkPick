@@ -1,7 +1,7 @@
 檔案路徑：resources\js\Pages\Cart.jsx
 
 import React, { useMemo } from 'react'; 
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react'; 
 import Navbar from '../Components/Navbar';
 import { useCart } from '../Contexts/CartContext';
 export default function Cart() {
@@ -117,10 +117,13 @@ export default function Cart() {
                                         ${totalAmount.toLocaleString()}
                                     &lt;/span&gt;
                                 &lt;/div&gt;
-                                &lt;button className="w-full bg-pink-600 text-white py-3.5 rounded-lg font-bold text-lg hover:bg-pink-700 transition shadow-md flex justify-center items-center gap-2"&gt;
+                                &lt;Link
+                                    href="/checkout"
+                                    className="w-full bg-pink-600 text-white py-3.5 rounded-lg font-bold text-lg hover:bg-pink-700 transition shadow-md flex justify-center items-center gap-2"
+                                &gt;
                                     前往結帳
                                     &lt;svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"&gt;&lt;path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"&gt;&lt;/path&gt;&lt;/svg&gt;
-                                &lt;/button&gt;
+                                &lt;/Link&gt;
                                 &lt;div className="mt-4 text-xs text-center text-gray-400"&gt;
                                     點擊「前往結帳」代表您同意 PinkPick 的服務條款。
                                 &lt;/div&gt;

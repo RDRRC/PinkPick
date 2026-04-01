@@ -16,6 +16,7 @@ Route::get('/dashboard', function () {
 
 // === 1. 購物車頁面路由 (Inertia 專用語法糖) ===
 Route::inertia('/cart', 'Cart')->name('cart.page');
+Route::inertia('/checkout', 'Checkout')->name('checkout.page'); // 加入這行
 
 // === 2. 購物車資料 API 路由 (路徑改為 /cart/items) ===
 Route::get('/cart/items', [CartController::class, 'index'])->name('cart.items.index');

@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react'; // 【優化】引入 useMemo
-import { Head, Link } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react'; // 確保最上面有引入 Link
 import Navbar from '../Components/Navbar';
 import { useCart } from '../Contexts/CartContext';
 
@@ -147,10 +147,13 @@ export default function Cart() {
                                     </span>
                                 </div>
 
-                                <button className="w-full bg-pink-600 text-white py-3.5 rounded-lg font-bold text-lg hover:bg-pink-700 transition shadow-md flex justify-center items-center gap-2">
+                                <Link
+                                    href="/checkout"
+                                    className="w-full bg-pink-600 text-white py-3.5 rounded-lg font-bold text-lg hover:bg-pink-700 transition shadow-md flex justify-center items-center gap-2"
+                                >
                                     前往結帳
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
-                                </button>
+                                </Link>
 
                                 <div className="mt-4 text-xs text-center text-gray-400">
                                     點擊「前往結帳」代表您同意 PinkPick 的服務條款。
