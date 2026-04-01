@@ -14,10 +14,14 @@ Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
 
-// 👇 新增這區塊：購物車 API 路由
-// 放在 web.php 中，Laravel 會自動套用 web middleware，啟動 Session 與 CSRF 保護
-Route::get('/cart', [CartController::class, 'index'])->name('cart.index');
-Route::post('/cart', [CartController::class, 'store'])->name('cart.store');
+// === 1. 購物車頁面路由 (Inertia 專用語法糖) ===
+Route::inertia('/cart', 'Cart')->name('cart.page');
+
+// === 2. 購物車資料 API 路由 (路徑改為 /cart/items) ===
+Route::get('/cart/items', [CartController::class, 'index'])->name('cart.items.index');
+Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
+Route::patch('/cart/items/{id}', [CartController::class, 'update'])->name('cart.items.update');
+Route::delete('/cart/items/{id}', [CartController::class, 'destroy'])->name('cart.items.destroy');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

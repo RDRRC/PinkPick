@@ -80,4 +80,65 @@ class CartController extends Controller
 
         return $this->sendResponse(null, '商品已成功加入購物車');
     }
+    /**
+     * 更新購物車商品數量
+     */
+    public function update(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'quantity' => 'required|integer|min:1'
+        ]);
+
+        $cartItem = CartItem::find($id);
+
+        if (!$cartItem) {
+            return $this->sendError('找不到該購物車項目', 404);
+        }
+
+        $userId = Auth::id();
+        $sessionId = $request->session()->getId();
+
+        // 【安全防護】嚴謹的所有權判斷 (IDOR 防護)
+        $isOwner = $userId
+            ? ($cartItem->user_id === $userId)
+            : ($cartItem->session_id === $sessionId && is_null($cartItem->user_id));
+
+        if (!$isOwner) {
+            return $this->sendError('無權限修改此項目', 403);
+        }
+
+        $cartItem->update([
+            'quantity' => $validated['quantity']
+        ]);
+
+        return $this->sendResponse(null, '購物車數量已更新');
+    }
+
+    /**
+     * 移除購物車內的特定商品
+     */
+    public function destroy(Request $request, $id)
+    {
+        $cartItem = CartItem::find($id);
+
+        if (!$cartItem) {
+            return $this->sendError('找不到該購物車項目', 404);
+        }
+
+        $userId = Auth::id();
+        $sessionId = $request->session()->getId();
+
+        // 【安全防護】嚴謹的所有權判斷 (IDOR 防護)
+        $isOwner = $userId
+            ? ($cartItem->user_id === $userId)
+            : ($cartItem->session_id === $sessionId && is_null($cartItem->user_id));
+
+        if (!$isOwner) {
+            return $this->sendError('無權限刪除此項目', 403);
+        }
+
+        $cartItem->delete();
+
+        return $this->sendResponse(null, '商品已從購物車移除');
+    }
 }
