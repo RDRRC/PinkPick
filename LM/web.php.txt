@@ -4,23 +4,25 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 Route::redirect('/', '/shop');
-Route::get('/shop', [ShopController::class, 'index'])->name('shop');
+Route::get('/shop', [ShopController::class, 'index'])->name('shop'); 
+Route::get('/dashboard', function () {
+    return Inertia::render('Dashboard');
+})->middleware(['auth', 'verified'])->name('dashboard');
 Route::inertia('/cart', 'Cart')->name('cart.page');
 Route::get('/cart/items', [CartController::class, 'index'])->name('cart.items.index');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
 Route::patch('/cart/items/{id}', [CartController::class, 'update'])->name('cart.items.update');
 Route::delete('/cart/items/{id}', [CartController::class, 'destroy'])->name('cart.items.destroy');
-Route::middleware(['auth'])->group(function () {
-    Route::get('/dashboard', function () {
-        return Inertia::render('Dashboard');
-    })->middleware(['verified'])->name('dashboard');
+Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-    Route::inertia('/checkout', 'Checkout')->name('checkout.page'); 
-    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store'); 
+    Route::inertia('/checkout', 'Checkout')->name('checkout.page');
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
+    Route::get('/orders/success', [OrderController::class, 'success'])->name('orders.success');
 });
 require __DIR__ . '/auth.php';

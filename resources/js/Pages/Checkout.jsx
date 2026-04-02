@@ -33,13 +33,10 @@ export default function Checkout() {
             const response = await axios.post('/orders', data);
             const { order_number } = response.data.payload;
 
-            alert(`🎉 訂單建立成功！訂單編號：${order_number}`);
-
-            // 訂單成立後，立刻更新前端狀態 (數字歸零)
+            // 1. 更新全域購物車狀態 (歸零)
             await fetchCart();
-
-            // 無縫跳轉回商城
-            router.visit('/shop');
+            // 2. 導向至結帳成功頁面 (附帶 query string)
+            router.visit(`/orders/success?order_number=${order_number}`);
 
         } catch (error) {
             const msg = error.response?.data?.message || "訂單送出失敗，請檢查欄位";

@@ -6,6 +6,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Order;
 
 class User extends Authenticatable
 {
@@ -51,5 +52,15 @@ class User extends Authenticatable
     public function cartItems()
     {
         return $this->hasMany(CartItem::class);
+    }
+
+    /**
+     * 📦 會員訂單關聯 (Step 2)
+     * 一個使用者可以擁有多筆訂單
+     */
+    public function orders()
+    {
+        // 建議直接使用 class 路徑，更為嚴謹
+        return $this->hasMany(\App\Models\Order::class);
     }
 }

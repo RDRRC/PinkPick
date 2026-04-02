@@ -27,9 +27,8 @@ export default function Checkout() {
         try {
             const response = await axios.post('/orders', data);
             const { order_number } = response.data.payload;
-            alert(`🎉 訂單建立成功！訂單編號：${order_number}`);
             await fetchCart();
-            router.visit('/shop');
+            router.visit(`/orders/success?order_number=${order_number}`);
         } catch (error) {
             const msg = error.response?.data?.message || "訂單送出失敗，請檢查欄位";
             setLocalError(msg);
