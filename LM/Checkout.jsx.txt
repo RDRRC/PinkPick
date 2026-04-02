@@ -1,11 +1,12 @@
 檔案路徑：resources\js\Pages\Checkout.jsx
 
-import React, { useMemo } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import React, { useMemo, useState } from 'react';
+import axios from 'axios'; 
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react'; 
 import Navbar from '../Components/Navbar';
 import { useCart } from '../Contexts/CartContext';
 export default function Checkout() {
-    const { cartItems } = useCart();
+    const { cartItems, fetchCart } = useCart();
     const { auth } = usePage().props;
     const totalAmount = useMemo(() =&gt; {
         return cartItems.reduce((total, item) =&gt; {
@@ -19,9 +20,22 @@ export default function Checkout() {
         recipient_phone: '',
         shipping_address: '',
     });
-    const handleSubmit = (e) =&gt; {
+    const [localError, setLocalError] = useState(null);
+    const handleSubmit = async (e) =&gt; {
         e.preventDefault();
-        alert('準備送出訂單！接下來我們需要實作後端 API。');
+        setLocalError(null);
+        try {
+            const response = await axios.post('/orders', data);
+            const { order_number } = response.data.payload;
+            alert(`🎉 訂單建立成功！訂單編號：${order_number}`);
+            await fetchCart();
+            router.visit('/shop');
+        } catch (error) {
+            const msg = error.response?.data?.message || "訂單送出失敗，請檢查欄位";
+            setLocalError(msg);
+            alert(msg);
+            console.error(error);
+        }
     };
     return (
         &lt;div className="min-h-screen bg-gray-100 pb-12"&gt;

@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShopController; // 🌟 1. 在最上面新增這行，匯入 ShopController
 // 👇 新增這行：引入我們剛寫好的購物車控制器
 use App\Http\Controllers\CartController;
+use App\Http\Controllers\OrderController; // 記得引入
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -23,6 +24,8 @@ Route::get('/cart/items', [CartController::class, 'index'])->name('cart.items.in
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
 Route::patch('/cart/items/{id}', [CartController::class, 'update'])->name('cart.items.update');
 Route::delete('/cart/items/{id}', [CartController::class, 'destroy'])->name('cart.items.destroy');
+// 【新增這行】建立訂單 API
+Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

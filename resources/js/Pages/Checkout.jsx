@@ -1,10 +1,12 @@
-import React, { useMemo } from 'react';
-import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import React, { useMemo, useState } from 'react';
+import axios from 'axios'; // 新增引入 axios
+import { Head, Link, useForm, usePage, router } from '@inertiajs/react'; // 新增引入 router
 import Navbar from '../Components/Navbar';
 import { useCart } from '../Contexts/CartContext';
 
 export default function Checkout() {
-    const { cartItems } = useCart();
+    // 這裡記得要把 fetchCart 解構出來
+    const { cartItems, fetchCart } = useCart();
     const { auth } = usePage().props;
 
     const totalAmount = useMemo(() => {
@@ -14,7 +16,6 @@ export default function Checkout() {
         }, 0);
     }, [cartItems]);
 
-    // 使用 Inertia 的 useForm 管理表單狀態，自動帶入會員資料
     const { data, setData, post, processing, errors } = useForm({
         recipient_name: auth?.user?.name || '',
         recipient_email: auth?.user?.email || '',
@@ -22,11 +23,30 @@ export default function Checkout() {
         shipping_address: '',
     });
 
-    const handleSubmit = (e) => {
+    const [localError, setLocalError] = useState(null);
+
+    const handleSubmit = async (e) => {
         e.preventDefault();
-        // 預留未來發送給 OrderController 的動作
-        // post('/checkout', { preserveScroll: true });
-        alert('準備送出訂單！接下來我們需要實作後端 API。');
+        setLocalError(null);
+
+        try {
+            const response = await axios.post('/orders', data);
+            const { order_number } = response.data.payload;
+
+            alert(`🎉 訂單建立成功！訂單編號：${order_number}`);
+
+            // 訂單成立後，立刻更新前端狀態 (數字歸零)
+            await fetchCart();
+
+            // 無縫跳轉回商城
+            router.visit('/shop');
+
+        } catch (error) {
+            const msg = error.response?.data?.message || "訂單送出失敗，請檢查欄位";
+            setLocalError(msg);
+            alert(msg);
+            console.error(error);
+        }
     };
 
     return (

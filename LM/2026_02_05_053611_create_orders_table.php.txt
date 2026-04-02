@@ -9,6 +9,14 @@ return new class extends Migration
     {
         Schema::create('orders', function (Blueprint $table) {
             $table->id();
+            $table->string('order_number')->unique()->comment('訂單編號');
+            $table->foreignId('user_id')->nullable()->constrained()->nullOnDelete()->comment('訪客為 null');
+            $table->decimal('total_amount', 10, 2)->comment('訂單總金額');
+            $table->string('recipient_name')->comment('收件人姓名');
+            $table->string('recipient_email')->comment('聯絡信箱');
+            $table->string('recipient_phone')->comment('聯絡電話');
+            $table->string('shipping_address')->comment('寄送地址');
+            $table->string('status')->default('pending')->comment('訂單狀態：pending, paid, shipped, completed, cancelled');
             $table->timestamps();
         });
     }
