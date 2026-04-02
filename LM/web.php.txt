@@ -1,27 +1,26 @@
 檔案路徑：routes\web.php
 
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\ShopController; 
+use App\Http\Controllers\ShopController;
 use App\Http\Controllers\CartController;
-use App\Http\Controllers\OrderController; 
-use Illuminate\Foundation\Application;
+use App\Http\Controllers\OrderController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 Route::redirect('/', '/shop');
-Route::get('/dashboard', function () {
-    return Inertia::render('Dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/shop', [ShopController::class, 'index'])->name('shop');
 Route::inertia('/cart', 'Cart')->name('cart.page');
-Route::inertia('/checkout', 'Checkout')->name('checkout.page'); 
 Route::get('/cart/items', [CartController::class, 'index'])->name('cart.items.index');
 Route::post('/cart/items', [CartController::class, 'store'])->name('cart.items.store');
 Route::patch('/cart/items/{id}', [CartController::class, 'update'])->name('cart.items.update');
 Route::delete('/cart/items/{id}', [CartController::class, 'destroy'])->name('cart.items.destroy');
-Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth'])->group(function () {
+    Route::get('/dashboard', function () {
+        return Inertia::render('Dashboard');
+    })->middleware(['verified'])->name('dashboard');
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    Route::inertia('/checkout', 'Checkout')->name('checkout.page'); 
+    Route::post('/orders', [OrderController::class, 'store'])->name('orders.store'); 
 });
 require __DIR__ . '/auth.php';
-Route::get('/shop', [ShopController::class, 'index'])->name('shop');
