@@ -8,8 +8,8 @@ import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { CartProvider } from './Contexts/CartContext';
 const appName = import.meta.env.VITE_APP_NAME || 'PinkPick';
 createInertiaApp({
-    title: (title) =&gt; `${title} - ${appName}`,
-    resolve: (name) =&gt; resolvePageComponent(`./Pages/${name}.jsx`, import.meta.glob('./Pages*.jsx')),
+    title: (title) =&gt; &#96;${title} - ${appName}&#96;,
+    resolve: (name) =&gt; resolvePageComponent(&#96;./Pages/${name}.jsx&#96;, import.meta.glob('./Pages*.jsx')),
     setup({ el, App, props }) {
         const root = createRoot(el);
         root.render(

@@ -7,7 +7,7 @@ export default function Pagination({ page, lastPage, onPageChange }) {
             &lt;button
                 onClick={() =&gt; onPageChange(page - 1)} 
                 disabled={page === 1}
-                className={`px-4 py-2 rounded border ${page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+                className={&#96;px-4 py-2 rounded border ${page === 1 ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}&#96;}
             &gt;
                 &larr; 上一頁
             &lt;/button&gt;
@@ -17,7 +17,7 @@ export default function Pagination({ page, lastPage, onPageChange }) {
             &lt;button
                 onClick={() =&gt; onPageChange(page + 1)} 
                 disabled={page === lastPage}
-                className={`px-4 py-2 rounded border ${page === lastPage ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}`}
+                className={&#96;px-4 py-2 rounded border ${page === lastPage ? 'bg-gray-100 text-gray-400 cursor-not-allowed' : 'bg-white hover:bg-gray-50 text-gray-700'}&#96;}
             &gt;
                 下一頁 &rarr;
             &lt;/button&gt;

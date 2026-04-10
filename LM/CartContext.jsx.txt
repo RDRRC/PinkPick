@@ -35,7 +35,7 @@ export function CartProvider({ children }) {
     const updateQuantity = async (cartItemId, newQuantity) =&gt; {
         if (newQuantity &lt; 1) return;
         try {
-            const response = await axios.patch(`/cart/items/${cartItemId}`, {
+            const response = await axios.patch(&#96;/cart/items/${cartItemId}&#96;, {
                 quantity: newQuantity
             });
             await fetchCart();
@@ -47,7 +47,7 @@ export function CartProvider({ children }) {
     };
     const removeFromCart = async (cartItemId) =&gt; {
         try {
-            const response = await axios.delete(`/cart/items/${cartItemId}`);
+            const response = await axios.delete(&#96;/cart/items/${cartItemId}&#96;);
             await fetchCart();
             return { success: true, message: response.data.message };
         } catch (error) {

@@ -48,8 +48,8 @@ export default function Cart() {
                                                 {item.selected_attributes && Object.keys(item.selected_attributes).length &gt; 0 && (
                                                     &lt;div className="mt-2 flex flex-wrap gap-2 text-sm text-gray-500"&gt;
                                                         {Object.entries(item.selected_attributes).map(([attrId, valId]) =&gt; {
-                                                            const attrName = `規格 ${attrId}`;
-                                                            const valName = `選項 ${valId}`;
+                                                            const attrName = &#96;規格 ${attrId}&#96;;
+                                                            const valName = &#96;選項 ${valId}&#96;;
                                                             return (
                                                                 &lt;span key={attrId} className="bg-gray-100 px-2 py-1 rounded text-xs font-medium text-gray-600 border border-gray-200"&gt;
                                                                     {attrName} : {valName}

@@ -12,7 +12,7 @@ export default function ProductCard({ product }) {
         const groupId = attr.attribute_id;
         if (!acc[groupId]) {
             acc[groupId] = {
-                name: attr.attribute?.name || `規格 ${groupId}`,
+                name: attr.attribute?.name || &#96;規格 ${groupId}&#96;,
                 values: []
             };
         }
@@ -83,17 +83,17 @@ export default function ProductCard({ product }) {
                     &lt;span className="text-lg font-bold text-red-600"&gt;
                         ${Number(product.price).toLocaleString()}
                     &lt;/span&gt;
-                    &lt;span className={`text-xs ${product.stock &gt; 0 ? 'text-gray-500' : 'text-red-500 font-bold'}`}&gt;
-                        {product.stock &gt; 0 ? `庫存: ${product.stock}` : '已售完'}
+                    &lt;span className={&#96;text-xs ${product.stock &gt; 0 ? 'text-gray-500' : 'text-red-500 font-bold'}&#96;}&gt;
+                        {product.stock &gt; 0 ? &#96;庫存: ${product.stock}&#96; : '已售完'}
                     &lt;/span&gt;
                 &lt;/div&gt;
                 &lt;button
                     onClick={handleInitialAdd}
                     disabled={product.stock &lt;= 0 || isSubmitting}
-                    className={`mt-auto w-full py-2 rounded text-sm transition font-bold ${product.stock &gt; 0
+                    className={&#96;mt-auto w-full py-2 rounded text-sm transition font-bold ${product.stock &gt; 0
                             ? 'bg-pink-600 text-white hover:bg-pink-700 disabled:bg-pink-400'
                             : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-                        }`}
+                        }&#96;}
                 &gt;
                     {isSubmitting ? '處理中...' : (product.stock &gt; 0 ? '加入購物車' : '補貨中')}
                 &lt;/button&gt;
@@ -125,10 +125,10 @@ export default function ProductCard({ product }) {
                                         &lt;button
                                             key={val.id}
                                             onClick={(e) =&gt; handleOptionChange(e, attrId, val.id)}
-                                            className={`px-4 py-2 border rounded-md text-sm transition ${selectedOptions[attrId] === val.id
+                                            className={&#96;px-4 py-2 border rounded-md text-sm transition ${selectedOptions[attrId] === val.id
                                                     ? 'bg-pink-600 text-white border-pink-600 font-bold'
                                                     : 'bg-white text-gray-700 border-gray-300 hover:border-pink-500'
-                                                }`}
+                                                }&#96;}
                                         &gt;
                                             {val.value}
                                         &lt;/button&gt;

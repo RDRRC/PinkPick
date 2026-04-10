@@ -40,8 +40,12 @@ $content = preg_replace("/[\r\n]+/", "\n", $content);
 // 👇 智慧判斷：抓取副檔名
 $extension = pathinfo($targetFile, PATHINFO_EXTENSION);
 // 👇 只有當檔案是 jsx (或未來的 tsx, html) 時，才替換 < 和 >
-if ($extension === 'jsx') {
-    $content = str_replace(['<', '>'], ['&lt;', '&gt;'], $content);
+if (in_array($extension, ['jsx', 'js', 'tsx'])) {
+    $content = str_replace(
+        ['<', '>', '`'],
+        ['&lt;', '&gt;', '&#96;'],
+        $content
+    );
 }
 
 // ==========================================
