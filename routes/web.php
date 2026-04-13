@@ -39,6 +39,8 @@ Route::middleware('auth')->group(function () {
 
     // 新增結帳成功頁面路由 (使用 order_number 作為路由參數提升安全性與易讀性)
     Route::get('/orders/success', [OrderController::class, 'success'])->name('orders.success');
+
+    Route::get('/member/orders', [OrderController::class, 'index'])->name('member.orders');
 });
 
 require __DIR__ . '/auth.php';

@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Inertia\Inertia; // 記得引入 Inertia
 
 class OrderController extends Controller
 {
@@ -89,6 +90,28 @@ class OrderController extends Controller
 
         return \Inertia\Inertia::render('OrderSuccess', [
             'order' => $order
+        ]);
+    }
+    /**
+     * 顯示會員歷史訂單列表
+     */
+    public function index(Request $request)
+    {
+        $userId = Auth::id();
+
+        if (!$userId) {
+            return redirect()->route('login');
+        }
+
+        // 撈取該會員的訂單，包含明細與對應商品，並依建立時間反向排序 (最新的在前面)
+        $orders = Order::with(['items.product'])
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // 根據 LM AI 的建議，Inertia 頁面直接回傳 Inertia::render()，不需要 JSON 格式
+        return Inertia::render('Member/Orders', [
+            'orders' => $orders
         ]);
     }
 }

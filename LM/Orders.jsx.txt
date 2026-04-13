@@ -1,0 +1,93 @@
+檔案路徑：resources\js\Pages\Member\Orders.jsx
+
+import React from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import Navbar from '../../Components/Navbar';
+export default function Orders({ orders }) {
+    const { auth } = usePage().props;
+    return (
+        &lt;div className="min-h-screen bg-gray-50 pb-12"&gt;
+            &lt;Head title="我的訂單 - PinkPick" /&gt;
+            &lt;Navbar /&gt;
+            &lt;div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8"&gt;
+                &lt;div className="flex justify-between items-center mb-6"&gt;
+                    &lt;h1 className="text-2xl font-bold text-gray-900"&gt;我的訂單&lt;/h1&gt;
+                    &lt;Link
+                        href="/shop"
+                        className="text-sm font-medium text-pink-600 hover:text-pink-700 transition"
+                    &gt;
+                        ← 回到商城購物
+                    &lt;/Link&gt;
+                &lt;/div&gt;
+                {!orders || orders.length === 0 ? (
+                    &lt;div className="bg-white p-8 rounded-lg shadow-sm text-center"&gt;
+                        &lt;p className="text-gray-500 mb-4"&gt;您目前還沒有任何訂單紀錄。&lt;/p&gt;
+                        &lt;Link
+                            href="/shop"
+                            className="inline-block bg-pink-600 text-white px-6 py-2 rounded-md hover:bg-pink-700 transition"
+                        &gt;
+                            馬上去逛逛
+                        &lt;/Link&gt;
+                    &lt;/div&gt;
+                ) : (
+                    &lt;div className="space-y-6"&gt;
+                        {orders.map((order) =&gt; (
+                            &lt;div key={order.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"&gt;
+                                &lt;div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4"&gt;
+                                    &lt;div&gt;
+                                        &lt;p className="text-sm text-gray-500"&gt;訂單編號&lt;/p&gt;
+                                        &lt;p className="font-medium text-gray-900"&gt;{order.order_number}&lt;/p&gt;
+                                    &lt;/div&gt;
+                                    &lt;div&gt;
+                                        &lt;p className="text-sm text-gray-500"&gt;訂單日期&lt;/p&gt;
+                                        &lt;p className="font-medium text-gray-900"&gt;
+                                            {new Date(order.created_at).toLocaleDateString('zh-TW')}
+                                        &lt;/p&gt;
+                                    &lt;/div&gt;
+                                    &lt;div&gt;
+                                        &lt;p className="text-sm text-gray-500"&gt;總金額&lt;/p&gt;
+                                        &lt;p className="font-medium text-pink-600"&gt;${Number(order.total_amount).toLocaleString()}&lt;/p&gt;
+                                    &lt;/div&gt;
+                                    &lt;div&gt;
+                                        &lt;span className={&#96;px-3 py-1 rounded-full text-xs font-medium 
+                                            ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                                    'bg-gray-100 text-gray-800'}&#96;}&gt;
+                                            {order.status}
+                                        &lt;/span&gt;
+                                    &lt;/div&gt;
+                                &lt;/div&gt;
+                                {order.items && order.items.length &gt; 0 && (
+                                    &lt;div className="px-6 py-4"&gt;
+                                        &lt;ul className="divide-y divide-gray-100"&gt;
+                                            {order.items.map((item) =&gt; (
+                                                &lt;li key={item.id} className="py-3 flex justify-between"&gt;
+                                                    &lt;div&gt;
+                                                        &lt;p className="text-sm font-medium text-gray-900"&gt;
+                                                            {item.product?.name || '已下架商品'}
+                                                        &lt;/p&gt;
+                                                        &lt;p className="text-xs text-gray-500"&gt;
+                                                            數量: {item.quantity}
+                                                        &lt;/p&gt;
+                                                    &lt;/div&gt;
+                                                    &lt;p className="text-sm text-gray-900"&gt;
+                                                        ${Number(item.price).toLocaleString()}
+                                                    &lt;/p&gt;
+                                                &lt;/li&gt;
+                                            ))}
+                                        &lt;/ul&gt;
+                                    &lt;/div&gt;
+                                )}
+                            &lt;/div&gt;
+                        ))}
+                        &lt;div className="text-center mt-8"&gt;
+                            &lt;Link href="/shop" className="text-gray-500 hover:text-pink-600 text-sm"&gt;
+                                想買更多嗎？回到商城看看
+                            &lt;/Link&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                )}
+            &lt;/div&gt;
+        &lt;/div&gt;
+    );
+}

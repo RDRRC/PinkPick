@@ -24,5 +24,6 @@ Route::middleware('auth')->group(function () {
     Route::inertia('/checkout', 'Checkout')->name('checkout.page');
     Route::post('/orders', [OrderController::class, 'store'])->name('orders.store');
     Route::get('/orders/success', [OrderController::class, 'success'])->name('orders.success');
+    Route::get('/member/orders', [OrderController::class, 'index'])->name('member.orders');
 });
 require __DIR__ . '/auth.php';

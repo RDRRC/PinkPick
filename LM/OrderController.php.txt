@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use Inertia\Inertia; 
 class OrderController extends Controller
 {
     public function store(Request $request)
@@ -68,6 +69,20 @@ class OrderController extends Controller
             ->firstOrFail();
         return \Inertia\Inertia::render('OrderSuccess', [
             'order' => $order
+        ]);
+    }
+    public function index(Request $request)
+    {
+        $userId = Auth::id();
+        if (!$userId) {
+            return redirect()->route('login');
+        }
+        $orders = Order::with(['items.product'])
+            ->where('user_id', $userId)
+            ->orderBy('created_at', 'desc')
+            ->get();
+        return Inertia::render('Member/Orders', [
+            'orders' => $orders
         ]);
     }
 }

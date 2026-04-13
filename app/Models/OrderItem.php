@@ -17,4 +17,10 @@ class OrderItem extends Model
     protected $casts = [
         'selected_attributes' => 'array',
     ];
+
+    // 👇 新增這個關聯方法
+    public function product()
+    {
+        return $this->belongsTo(Product::class);
+    }
 }
