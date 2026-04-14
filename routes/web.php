@@ -41,6 +41,9 @@ Route::middleware('auth')->group(function () {
     Route::get('/orders/success', [OrderController::class, 'success'])->name('orders.success');
 
     Route::get('/member/orders', [OrderController::class, 'index'])->name('member.orders');
+
+    // 🌟 補上這行：訂單詳情路由
+    Route::get('/member/orders/{order_number}', [OrderController::class, 'show'])->name('member.orders.show');
 });
 
 require __DIR__ . '/auth.php';

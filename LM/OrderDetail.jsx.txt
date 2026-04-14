@@ -1,0 +1,100 @@
+檔案路徑：resources\js\Pages\Member\OrderDetail.jsx
+
+import React from 'react';
+import { Head, Link } from '@inertiajs/react';
+import Navbar from '../../Components/Navbar';
+export default function OrderDetail({ order }) {
+    return (
+        &lt;div className="min-h-screen bg-gray-50 pb-12"&gt;
+            &lt;Head title={&#96;訂單詳情 ${order.order_number} - PinkPick&#96;} /&gt;
+            &lt;Navbar /&gt;
+            &lt;div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8"&gt;
+                &lt;div className="mb-6"&gt;
+                    &lt;Link href={route('member.orders')} className="text-sm text-gray-500 hover:text-pink-600 transition"&gt;
+                        ← 返回我的訂單
+                    &lt;/Link&gt;
+                &lt;/div&gt;
+                &lt;div className="bg-white rounded-lg shadow-sm overflow-hidden"&gt;
+                    &lt;div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4"&gt;
+                        &lt;div&gt;
+                            &lt;h1 className="text-xl font-bold text-gray-900"&gt;訂單詳情&lt;/h1&gt;
+                            &lt;p className="text-sm text-gray-500 mt-1"&gt;{order.order_number}&lt;/p&gt;
+                        &lt;/div&gt;
+                        &lt;div className="text-right"&gt;
+                            &lt;span className={&#96;px-3 py-1 rounded-full text-xs font-bold
+                                ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                    order.status === 'paid' ? 'bg-blue-100 text-blue-800' :
+                                        order.status === 'completed' ? 'bg-green-100 text-green-800' :
+                                            'bg-gray-100 text-gray-800'}&#96;}&gt;
+                                {order.status.toUpperCase()}
+                            &lt;/span&gt;
+                            &lt;p className="text-sm text-gray-500 mt-2"&gt;
+                                成立時間：{new Date(order.created_at).toLocaleString('zh-TW')}
+                            &lt;/p&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                    &lt;div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8"&gt;
+                        &lt;div&gt;
+                            &lt;h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2"&gt;收件人資訊&lt;/h2&gt;
+                            &lt;ul className="space-y-3 text-sm text-gray-700"&gt;
+                                &lt;li&gt;&lt;span className="font-medium text-gray-500 w-20 inline-block"&gt;姓名：&lt;/span&gt; {order.recipient_name}&lt;/li&gt;
+                                &lt;li&gt;&lt;span className="font-medium text-gray-500 w-20 inline-block"&gt;聯絡電話：&lt;/span&gt; {order.recipient_phone}&lt;/li&gt;
+                                &lt;li&gt;&lt;span className="font-medium text-gray-500 w-20 inline-block"&gt;電子郵件：&lt;/span&gt; {order.recipient_email}&lt;/li&gt;
+                                &lt;li&gt;&lt;span className="font-medium text-gray-500 w-20 inline-block"&gt;配送地址：&lt;/span&gt; {order.shipping_address}&lt;/li&gt;
+                            &lt;/ul&gt;
+                        &lt;/div&gt;
+                        &lt;div&gt;
+                            &lt;h2 className="text-lg font-bold text-gray-800 mb-4 border-b pb-2"&gt;付款明細&lt;/h2&gt;
+                            &lt;ul className="space-y-3 text-sm text-gray-700"&gt;
+                                &lt;li className="flex justify-between"&gt;
+                                    &lt;span className="text-gray-500"&gt;商品總計&lt;/span&gt;
+                                    &lt;span&gt;${Number(order.total_amount).toLocaleString()}&lt;/span&gt;
+                                &lt;/li&gt;
+                                &lt;li className="flex justify-between"&gt;
+                                    &lt;span className="text-gray-500"&gt;運費&lt;/span&gt;
+                                    &lt;span className="text-green-600 font-medium"&gt;免運費&lt;/span&gt;
+                                &lt;/li&gt;
+                                &lt;li className="flex justify-between items-center border-t pt-3 mt-3"&gt;
+                                    &lt;span className="font-bold text-gray-800 text-base"&gt;總結帳金額&lt;/span&gt;
+                                    &lt;span className="font-bold text-red-600 text-xl"&gt;${Number(order.total_amount).toLocaleString()}&lt;/span&gt;
+                                &lt;/li&gt;
+                            &lt;/ul&gt;
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                    &lt;div className="border-t border-gray-200"&gt;
+                        &lt;div className="bg-gray-50 px-6 py-3"&gt;
+                            &lt;h2 className="text-sm font-bold text-gray-700"&gt;購買商品明細&lt;/h2&gt;
+                        &lt;/div&gt;
+                        &lt;ul className="divide-y divide-gray-200"&gt;
+                            {order.items.map((item) =&gt; (
+                                &lt;li key={item.id} className="p-6 flex items-center gap-4"&gt;
+                                    &lt;div className="w-16 h-16 bg-gray-200 rounded-md flex-shrink-0 flex items-center justify-center text-xs text-gray-400"&gt;
+                                        Img
+                                    &lt;/div&gt;
+                                    &lt;div className="flex-1"&gt;
+                                        &lt;p className="font-bold text-gray-800"&gt;{item.product?.name || '已下架商品'}&lt;/p&gt;
+                                        {item.selected_attributes && Object.keys(item.selected_attributes).length &gt; 0 && (
+                                            &lt;div className="mt-1 flex flex-wrap gap-2 text-xs text-gray-500"&gt;
+                                                {Object.entries(item.selected_attributes).map(([attrId, valId]) =&gt; (
+                                                    &lt;span key={attrId} className="bg-gray-100 px-2 py-1 rounded"&gt;
+                                                        規格{attrId} : 選項{valId}
+                                                    &lt;/span&gt;
+                                                ))}
+                                            &lt;/div&gt;
+                                        )}
+                                    &lt;/div&gt;
+                                    &lt;div className="text-right"&gt;
+                                        &lt;p className="text-sm text-gray-500"&gt;單價 ${Number(item.price).toLocaleString()} x {item.quantity}&lt;/p&gt;
+                                        &lt;p className="font-bold text-pink-600 mt-1"&gt;
+                                            小計 ${(Number(item.price) * item.quantity).toLocaleString()}
+                                        &lt;/p&gt;
+                                    &lt;/div&gt;
+                                &lt;/li&gt;
+                            ))}
+                        &lt;/ul&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    );
+}

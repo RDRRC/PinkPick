@@ -61,6 +61,13 @@ export default function Orders({ orders }) {
                                             {/* 這裡可以寫一個狀態對應表，暫時先直接顯示英文或簡單判斷 */}
                                             {order.status}
                                         </span>
+                                        {/* 🌟 優化：使用 Ziggy 命名路由並帶入參數 */}
+                                        <Link
+                                            href={route('member.orders.show', order.order_number)}
+                                            className="ml-4 text-sm text-pink-600 hover:text-pink-800 font-bold underline transition"
+                                        >
+                                            查看詳情
+                                        </Link>
                                     </div>
                                 </div>
 

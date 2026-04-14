@@ -55,6 +55,12 @@ export default function Orders({ orders }) {
                                                     'bg-gray-100 text-gray-800'}&#96;}&gt;
                                             {order.status}
                                         &lt;/span&gt;
+                                        &lt;Link
+                                            href={route('member.orders.show', order.order_number)}
+                                            className="ml-4 text-sm text-pink-600 hover:text-pink-800 font-bold underline transition"
+                                        &gt;
+                                            查看詳情
+                                        &lt;/Link&gt;
                                     &lt;/div&gt;
                                 &lt;/div&gt;
                                 {order.items && order.items.length &gt; 0 && (

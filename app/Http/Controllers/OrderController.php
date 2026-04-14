@@ -195,4 +195,19 @@ class OrderController extends Controller
             'orders' => $orders
         ]);
     }
+    // 🌟 新增 show 方法
+    public function show(Request $request, $orderNumber)
+    {
+        $userId = Auth::id();
+
+        // 嚴格限制只能查閱屬於自己的訂單
+        $order = Order::with(['items.product'])
+            ->where('user_id', $userId)
+            ->where('order_number', $orderNumber)
+            ->firstOrFail();
+
+        return Inertia::render('Member/OrderDetail', [
+            'order' => $order
+        ]);
+    }
 }

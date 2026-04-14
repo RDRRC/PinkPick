@@ -125,4 +125,15 @@ class OrderController extends Controller
             'orders' => $orders
         ]);
     }
+    public function show(Request $request, $orderNumber)
+    {
+        $userId = Auth::id();
+        $order = Order::with(['items.product'])
+            ->where('user_id', $userId)
+            ->where('order_number', $orderNumber)
+            ->firstOrFail();
+        return Inertia::render('Member/OrderDetail', [
+            'order' => $order
+        ]);
+    }
 }
