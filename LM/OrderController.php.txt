@@ -5,6 +5,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
 use App\Models\Product; 
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -22,6 +23,26 @@ class OrderController extends Controller
             'shipping_address' => 'required|string|max:255',
         ]);
         $userId = Auth::id();
+        $user = Auth::user();
+        assert($user instanceof User);
+        if ($user) {
+            $updateData = [];
+            if (!empty($updateData)) {
+                $user->update($updateData); 
+            }
+        }
+        if ($user) {
+            $updateData = [];
+            if (empty($user->phone) && $request->filled('recipient_phone')) {
+                $updateData['phone'] = $request->recipient_phone;
+            }
+            if (empty($user->address) && $request->filled('shipping_address')) {
+                $updateData['address'] = $request->shipping_address;
+            }
+            if (!empty($updateData)) {
+                $user->update($updateData);
+            }
+        }
         $cartItems = CartItem::with(['product'])
             ->where('user_id', $userId)
             ->get();

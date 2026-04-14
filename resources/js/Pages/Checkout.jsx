@@ -19,8 +19,9 @@ export default function Checkout() {
     const { data, setData, post, processing, errors } = useForm({
         recipient_name: auth?.user?.name || '',
         recipient_email: auth?.user?.email || '',
-        recipient_phone: '',
-        shipping_address: '',
+        // 🌟 修改：自動帶入會員的 phone 與 address，若無則為空字串
+        recipient_phone: auth?.user?.phone || '',
+        shipping_address: auth?.user?.address || '',
     });
 
     const [localError, setLocalError] = useState(null);

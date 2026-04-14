@@ -6,6 +6,7 @@ use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
 use App\Models\Product; // 剛才提醒要補上的
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,44 @@ class OrderController extends Controller
 
         $userId = Auth::id();
 
-        // 這裡的 with(['product']) 用於計算總價與建立明細，但不可用於庫存檢查
+        // ==========================================
+        // 🌟 核心優化：無感儲存會員預設聯絡資訊
+        // ==========================================
+        $user = Auth::user();
+        // 🌟 解法：加入這行 PHP 原生斷言
+        // 這是一段實際的程式碼，清洗檔絕對不會動它！
+        // 而且 VS Code (Intelephense) 看到這行後，就會立刻知道 $user 是 User 模型
+        assert($user instanceof User);
+
+        if ($user) {
+            $updateData = [];
+
+            // ... 你的 updateData 邏輯
+
+            if (!empty($updateData)) {
+                $user->update($updateData); // 紅線完美消失！
+            }
+        }
+        if ($user) {
+            $updateData = [];
+
+            // 若會員欄位為空，將這次填寫的資料作為未來的預設值
+            if (empty($user->phone) && $request->filled('recipient_phone')) {
+                $updateData['phone'] = $request->recipient_phone;
+            }
+
+            if (empty($user->address) && $request->filled('shipping_address')) {
+                $updateData['address'] = $request->shipping_address;
+            }
+
+            // 只有在需要更新時才執行資料庫寫入，節省效能
+            if (!empty($updateData)) {
+                // 因為我們前一步已經將 phone 與 address 加入 User Model 的 $fillable，這裡可以直接 update
+                $user->update($updateData);
+            }
+        }
+        // ==========================================
+
         $cartItems = CartItem::with(['product'])
             ->where('user_id', $userId)
             ->get();

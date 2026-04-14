@@ -17,8 +17,8 @@ export default function Checkout() {
     const { data, setData, post, processing, errors } = useForm({
         recipient_name: auth?.user?.name || '',
         recipient_email: auth?.user?.email || '',
-        recipient_phone: '',
-        shipping_address: '',
+        recipient_phone: auth?.user?.phone || '',
+        shipping_address: auth?.user?.address || '',
     });
     const [localError, setLocalError] = useState(null);
     const handleSubmit = async (e) =&gt; {
