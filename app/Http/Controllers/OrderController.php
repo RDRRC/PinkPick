@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
+use App\Models\Product; // 剛才提醒要補上的
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; // 🌟 補上這行，明確引入 Log
 use Illuminate\Support\Str;
 use Inertia\Inertia; // 記得引入 Inertia
+
 
 class OrderController extends Controller
 {
@@ -24,7 +27,7 @@ class OrderController extends Controller
 
         $userId = Auth::id();
 
-        // 💡 優化點：因為已受 Auth Middleware 保護，直接撈取當前會員的購物車即可，大幅簡化邏輯
+        // 這裡的 with(['product']) 用於計算總價與建立明細，但不可用於庫存檢查
         $cartItems = CartItem::with(['product'])
             ->where('user_id', $userId)
             ->get();
@@ -37,9 +40,36 @@ class OrderController extends Controller
             return $total + ($item->product->price * $item->quantity);
         }, 0);
 
+        // 開啟資料庫交易
         DB::beginTransaction();
 
         try {
+            // ==========================================
+            // 📦 業界標準：悲觀鎖 (Pessimistic Locking) 庫存扣除
+            // ==========================================
+            foreach ($cartItems as $item) {
+                // ⚠️ 關鍵防護：在 Transaction 內重新查詢商品，並加上 lockForUpdate()
+                // 這會鎖定該筆商品資料列，直到 Commit 或 RollBack 後才釋放，確保其他結帳請求排隊等待
+                $product = Product::where('id', $item->product_id)
+                    ->lockForUpdate()
+                    ->first();
+
+                if (!$product) {
+                    throw new \Exception("商品「{$item->product->name}」已下架或不存在。");
+                }
+
+                // 檢查鎖定後的最新庫存
+                if ($product->stock < $item->quantity) {
+                    throw new \Exception("抱歉，商品「{$product->name}」庫存不足，僅剩 {$product->stock} 件。");
+                }
+
+                // 扣除庫存
+                $product->decrement('stock', $item->quantity);
+            }
+
+            // ==========================================
+            // 📝 訂單建立邏輯
+            // ==========================================
             $order = Order::create([
                 'order_number' => 'ORD-' . strtoupper(Str::random(10)),
                 'user_id' => $userId,
@@ -63,12 +93,25 @@ class OrderController extends Controller
 
             CartItem::whereIn('id', $cartItems->pluck('id'))->delete();
 
+            // 所有操作皆成功，提交交易
             DB::commit();
 
             return $this->sendResponse(['order_number' => $order->order_number], '訂單建立成功！');
         } catch (\Exception $e) {
+            // 發生任何錯誤，還原所有資料庫操作
             DB::rollBack();
-            return $this->sendError('訂單建立失敗，請稍後再試。', 500);
+
+            // 💡 業界標準：安全地回傳錯誤訊息
+            // 只有我們自定義的預期錯誤 (庫存不足、下架) 才回傳給前端，其餘系統底層錯誤應記錄 Log 並回傳模糊提示
+            $errorMessage = $e->getMessage();
+            if (!str_contains($errorMessage, '庫存不足') && !str_contains($errorMessage, '已下架')) {
+                // 將真實的錯誤記錄到 Laravel Log，方便開發者除錯
+                Log::error('Order Checkout Failed: ' . $e->getMessage());
+                // 給使用者的安全提示
+                $errorMessage = '系統繁忙，訂單建立失敗，請稍後再試。';
+            }
+
+            return $this->sendError($errorMessage, 400);
         }
     }
 

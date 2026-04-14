@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
+use App\Models\Product; 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log; 
 use Illuminate\Support\Str;
 use Inertia\Inertia; 
 class OrderController extends Controller
@@ -31,6 +33,18 @@ class OrderController extends Controller
         }, 0);
         DB::beginTransaction();
         try {
+            foreach ($cartItems as $item) {
+                $product = Product::where('id', $item->product_id)
+                    ->lockForUpdate()
+                    ->first();
+                if (!$product) {
+                    throw new \Exception("商品「{$item->product->name}」已下架或不存在。");
+                }
+                if ($product->stock < $item->quantity) {
+                    throw new \Exception("抱歉，商品「{$product->name}」庫存不足，僅剩 {$product->stock} 件。");
+                }
+                $product->decrement('stock', $item->quantity);
+            }
             $order = Order::create([
                 'order_number' => 'ORD-' . strtoupper(Str::random(10)),
                 'user_id' => $userId,
@@ -55,7 +69,12 @@ class OrderController extends Controller
             return $this->sendResponse(['order_number' => $order->order_number], '訂單建立成功！');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->sendError('訂單建立失敗，請稍後再試。', 500);
+            $errorMessage = $e->getMessage();
+            if (!str_contains($errorMessage, '庫存不足') && !str_contains($errorMessage, '已下架')) {
+                Log::error('Order Checkout Failed: ' . $e->getMessage());
+                $errorMessage = '系統繁忙，訂單建立失敗，請稍後再試。';
+            }
+            return $this->sendError($errorMessage, 400);
         }
     }
     public function success(Request $request)
