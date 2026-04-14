@@ -1,20 +1,20 @@
+// 檔案路徑: resources/js/Components/ProductCard.jsx
 import React, { useState } from 'react';
 import { useCart } from '../Contexts/CartContext';
 
 export default function ProductCard({ product }) {
     const { addToCart } = useCart();
-
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [selectedOptions, setSelectedOptions] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [localError, setLocalError] = useState(null);
 
-    // 【優化】：分群時同時保留規格名稱 (例如: 顏色、尺寸)
+    const [quantity, setQuantity] = useState(1);
+
     const groupedAttributes = product.attributes?.reduce((acc, attr) => {
         const groupId = attr.attribute_id;
         if (!acc[groupId]) {
             acc[groupId] = {
-                // 嘗試抓取關聯的屬性名稱，若無則顯示預設
                 name: attr.attribute?.name || `規格 ${groupId}`,
                 values: []
             };
@@ -25,26 +25,17 @@ export default function ProductCard({ product }) {
 
     const hasAttributes = Object.keys(groupedAttributes).length > 0;
 
-    // 點擊「加入購物車」初始按鈕
     const handleInitialAdd = (e) => {
-        // 【核心防護】：阻止事件冒泡，避免觸發卡片外層的 <Link>
         e.preventDefault();
         e.stopPropagation();
-
         if (product.stock <= 0) return;
 
-        if (hasAttributes) {
-            setIsModalOpen(true);
-        } else {
-            executeAddToCart({});
-        }
+        setIsModalOpen(true);
     };
 
-    // 選擇特定規格時的更新
     const handleOptionChange = (e, attributeId, valueId) => {
         e.preventDefault();
         e.stopPropagation();
-
         setSelectedOptions(prev => ({
             ...prev,
             [attributeId]: Number(valueId)
@@ -52,15 +43,40 @@ export default function ProductCard({ product }) {
         setLocalError(null);
     };
 
-    // 執行呼叫 API 的動作
+    const handleQuantityChange = (e) => {
+        const val = e.target.value;
+        if (val === '') {
+            setQuantity('');
+            return;
+        }
+        const parsedVal = parseInt(val, 10);
+        if (!isNaN(parsedVal)) {
+            setQuantity(parsedVal);
+        }
+    };
+
+    const validateQuantity = () => {
+        let validQuantity = parseInt(quantity, 10);
+        if (isNaN(validQuantity) || validQuantity < 1) {
+            validQuantity = 1;
+        } else if (validQuantity > product.stock) {
+            validQuantity = product.stock;
+        }
+        setQuantity(validQuantity);
+        return validQuantity;
+    };
+
     const executeAddToCart = async (attributesPayload) => {
         setIsSubmitting(true);
         setLocalError(null);
 
+        const finalQuantity = validateQuantity();
+
         try {
-            await addToCart(product.id, 1, attributesPayload);
+            await addToCart(product.id, finalQuantity, attributesPayload);
             setIsModalOpen(false);
             setSelectedOptions({});
+            setQuantity(1);
         } catch (error) {
             const msg = error.response?.data?.message || "加入購物車失敗，請稍後再試";
             setLocalError(msg);
@@ -69,11 +85,9 @@ export default function ProductCard({ product }) {
         }
     };
 
-    // 彈窗內點擊「確認加入」
     const handleConfirmAdd = (e) => {
         e.preventDefault();
         e.stopPropagation();
-
         const requiredGroupsCount = Object.keys(groupedAttributes).length;
         const selectedGroupsCount = Object.keys(selectedOptions).length;
 
@@ -81,21 +95,19 @@ export default function ProductCard({ product }) {
             setLocalError("請完整選擇所有商品規格");
             return;
         }
-
         executeAddToCart(selectedOptions);
     };
 
-    // 關閉彈窗並阻止冒泡
     const handleCloseModal = (e) => {
         e.preventDefault();
         e.stopPropagation();
         setIsModalOpen(false);
+        setQuantity(1);
     };
 
     return (
         <div className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group relative flex flex-col h-full">
             <div className="h-48 bg-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-gray-300 transition">
-                {/* 未來可替換為真實圖片 <img src={product.image_url} ... /> */}
                 Product Image
             </div>
 
@@ -114,7 +126,6 @@ export default function ProductCard({ product }) {
                     </span>
                 </div>
 
-                {/* mt-auto 確保按鈕永遠貼齊卡片底部 */}
                 <button
                     onClick={handleInitialAdd}
                     disabled={product.stock <= 0 || isSubmitting}
@@ -127,32 +138,22 @@ export default function ProductCard({ product }) {
                 </button>
             </div>
 
-            {/* --- EAV 規格選擇彈窗 (Modal) --- */}
+            {/* 彈出視窗 Modal */}
             {isModalOpen && (
-                <div
-                    className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50"
-                    onClick={handleCloseModal} // 點擊背景關閉
-                >
-                    <div
-                        className="bg-white rounded-lg p-6 w-11/12 max-w-md shadow-xl relative"
-                        onClick={(e) => e.stopPropagation()} // 點擊白底區域不關閉
-                    >
-                        <button
-                            onClick={handleCloseModal}
-                            className="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-xl font-bold"
-                        >
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50" onClick={handleCloseModal}>
+                    <div className="bg-white rounded-lg p-6 w-11/12 max-w-md shadow-xl relative" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={handleCloseModal} className="absolute top-3 right-4 text-gray-400 hover:text-gray-700 text-xl font-bold">
                             ✕
                         </button>
 
-                        <h2 className="text-xl font-bold mb-4 text-gray-800">選擇商品規格</h2>
+                        <h2 className="text-xl font-bold mb-4 text-gray-800">
+                            {hasAttributes ? '選擇商品規格與數量' : '確認購買數量'}
+                        </h2>
                         <p className="text-sm text-gray-500 mb-4">{product.name}</p>
 
-                        {/* 動態渲染每一個規格群組 */}
                         {Object.entries(groupedAttributes).map(([attrId, group]) => (
                             <div key={attrId} className="mb-4">
-                                <label className="block text-sm font-medium text-gray-700 mb-2">
-                                    {group.name}
-                                </label>
+                                <label className="block text-sm font-medium text-gray-700 mb-2">{group.name}</label>
                                 <div className="flex flex-wrap gap-2">
                                     {group.values.map((val) => (
                                         <button
@@ -169,6 +170,21 @@ export default function ProductCard({ product }) {
                                 </div>
                             </div>
                         ))}
+
+                        <div className="mb-4">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">購買數量</label>
+                            <input
+                                type="number"
+                                min="1"
+                                max={product.stock}
+                                value={quantity}
+                                onChange={handleQuantityChange}
+                                onBlur={validateQuantity}
+                                // 🔧 優化：若無規格，展開 Modal 時自動聚焦數量輸入框
+                                autoFocus={!hasAttributes}
+                                className="w-full border-gray-300 rounded-md shadow-sm focus:border-pink-500 focus:ring-pink-500 text-sm"
+                            />
+                        </div>
 
                         {localError && (
                             <div className="mb-4 p-2 bg-red-100 text-red-700 text-sm rounded border border-red-200">
