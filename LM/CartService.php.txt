@@ -1,0 +1,37 @@
+檔案路徑：app\Services\CartService.php
+
+namespace App\Services;
+use App\Models\CartItem;
+use Illuminate\Support\Facades\DB;
+class CartService
+{
+    public function mergeGuestCart(string $guestSessionId, int $userId): void
+    {
+        DB::transaction(function () use ($guestSessionId, $userId) {
+            $guestCartItems = CartItem::where('session_id', $guestSessionId)
+                ->whereNull('user_id')
+                ->lockForUpdate() 
+                ->get();
+            if ($guestCartItems->isEmpty()) {
+                return;
+            }
+            foreach ($guestCartItems as $item) {
+                $attributes = $item->selected_attributes ?? [];
+                ksort($attributes);
+                $newHashString = "U_{$userId}_{$item->product_id}_" . json_encode($attributes);
+                $newItemHash = hash('sha256', $newHashString);
+                $existingMemberItem = CartItem::where('item_hash', $newItemHash)->first();
+                if ($existingMemberItem) {
+                    $existingMemberItem->increment('quantity', $item->quantity);
+                    $item->delete();
+                } else {
+                    $item->update([
+                        'user_id' => $userId,
+                        'session_id' => null,
+                        'item_hash' => $newItemHash
+                    ]);
+                }
+            }
+        });
+    }
+}

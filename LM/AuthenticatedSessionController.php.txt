@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
+use App\Services\CartService; 
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -18,32 +19,12 @@ class AuthenticatedSessionController extends Controller
             'status' => session('status'),
         ]);
     }
-    public function store(LoginRequest $request): RedirectResponse
+    public function store(LoginRequest $request, CartService $cartService): RedirectResponse
     {
         $guestSessionId = $request->session()->getId();
         $request->authenticate();
-        $request->session()->regenerate(); 
-        $userId = Auth::id();
-        $guestCartItems = \App\Models\CartItem::where('session_id', $guestSessionId)
-            ->whereNull('user_id')
-            ->get();
-        foreach ($guestCartItems as $item) {
-            $attributes = $item->selected_attributes ?? [];
-            ksort($attributes);
-            $newHashString = "U_{$userId}_{$item->product_id}_" . json_encode($attributes);
-            $newItemHash = hash('sha256', $newHashString);
-            $existingMemberItem = \App\Models\CartItem::where('item_hash', $newItemHash)->first();
-            if ($existingMemberItem) {
-                $existingMemberItem->increment('quantity', $item->quantity);
-                $item->delete();
-            } else {
-                $item->update([
-                    'user_id' => $userId,
-                    'session_id' => null,
-                    'item_hash' => $newItemHash
-                ]);
-            }
-        }
+        $request->session()->regenerate();
+        $cartService->mergeGuestCart($guestSessionId, Auth::id());
         return redirect()->intended(route('shop', absolute: false));
     }
     public function destroy(Request $request): RedirectResponse
