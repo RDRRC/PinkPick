@@ -1,4 +1,5 @@
-// 檔案路徑: resources/js/Pages/Auth/Login.jsx
+檔案路徑：resources\js\Pages\Auth\Login.jsx
+
 import Checkbox from '@/Components/Checkbox';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
@@ -6,43 +7,35 @@ import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
 import { Head, Link, useForm } from '@inertiajs/react';
-
 export default function Login({ status, canResetPassword }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
         remember: false,
     });
-
-    const submit = (e) => {
+    const submit = (e) =&gt; {
         e.preventDefault();
         post(route('login'), {
-            onFinish: () => reset('password'),
+            onFinish: () =&gt; reset('password'),
         });
     };
-
     return (
-        <GuestLayout>
-            <Head title="登入" />
-
-            <div className="mb-4 text-left">
-                {/* ✅ 修正：精準對齊 web.php 的路由命名 route('shop') */}
-                <Link href={route('shop')} className="text-sm text-gray-500 hover:text-pink-600 transition">
+        &lt;GuestLayout&gt;
+            &lt;Head title="登入" /&gt;
+            &lt;div className="mb-4 text-left"&gt;
+                &lt;Link href={route('shop')} className="text-sm text-gray-500 hover:text-pink-600 transition"&gt;
                     ← 回商城首頁
-                </Link>
-            </div>
-
+                &lt;/Link&gt;
+            &lt;/div&gt;
             {status && (
-                <div className="mb-4 text-sm font-medium text-green-600">
+                &lt;div className="mb-4 text-sm font-medium text-green-600"&gt;
                     {status}
-                </div>
+                &lt;/div&gt;
             )}
-
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="email" value="電子郵件" />
-
-                    <TextInput
+            &lt;form onSubmit={submit}&gt;
+                &lt;div&gt;
+                    &lt;InputLabel htmlFor="email" value="電子郵件" /&gt;
+                    &lt;TextInput
                         id="email"
                         type="email"
                         name="email"
@@ -50,67 +43,57 @@ export default function Login({ status, canResetPassword }) {
                         className="mt-1 block w-full"
                         autoComplete="username"
                         isFocused={true}
-                        onChange={(e) => setData('email', e.target.value)}
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="密碼" />
-
-                    <TextInput
+                        onChange={(e) =&gt; setData('email', e.target.value)}
+                    /&gt;
+                    &lt;InputError message={errors.email} className="mt-2" /&gt;
+                &lt;/div&gt;
+                &lt;div className="mt-4"&gt;
+                    &lt;InputLabel htmlFor="password" value="密碼" /&gt;
+                    &lt;TextInput
                         id="password"
                         type="password"
                         name="password"
                         value={data.password}
                         className="mt-1 block w-full"
                         autoComplete="current-password"
-                        onChange={(e) => setData('password', e.target.value)}
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4 block">
-                    <label className="flex items-center">
-                        <Checkbox
+                        onChange={(e) =&gt; setData('password', e.target.value)}
+                    /&gt;
+                    &lt;InputError message={errors.password} className="mt-2" /&gt;
+                &lt;/div&gt;
+                &lt;div className="mt-4 block"&gt;
+                    &lt;label className="flex items-center"&gt;
+                        &lt;Checkbox
                             name="remember"
                             checked={data.remember}
-                            onChange={(e) =>
+                            onChange={(e) =&gt;
                                 setData('remember', e.target.checked)
                             }
-                        />
-                        <span className="ms-2 text-sm text-gray-600">
+                        /&gt;
+                        &lt;span className="ms-2 text-sm text-gray-600"&gt;
                             記住我
-                        </span>
-                    </label>
-                </div>
-
-                {/* 🌟 調整後的按鈕與連結區塊 (維持 PinkPick 品牌色與間距) */}
-                <div className="mt-6 flex flex-wrap items-center justify-end gap-4">
+                        &lt;/span&gt;
+                    &lt;/label&gt;
+                &lt;/div&gt;
+                &lt;div className="mt-6 flex flex-wrap items-center justify-end gap-4"&gt;
                     {canResetPassword && (
-                        <Link
+                        &lt;Link
                             href={route('password.request')}
                             className="rounded-md text-sm text-gray-600 underline hover:text-gray-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-                        >
+                        &gt;
                             忘記密碼？
-                        </Link>
+                        &lt;/Link&gt;
                     )}
-
-                    {/* 🌟 新增的註冊帳號按鈕 */}
-                    <Link
+                    &lt;Link
                         href={route('register')}
                         className="rounded-md text-sm text-pink-600 underline hover:text-pink-800 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 font-medium"
-                    >
+                    &gt;
                         還沒有帳號？點此註冊
-                    </Link>
-
-                    <PrimaryButton disabled={processing}>
+                    &lt;/Link&gt;
+                    &lt;PrimaryButton disabled={processing}&gt;
                         登入
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+                    &lt;/PrimaryButton&gt;
+                &lt;/div&gt;
+            &lt;/form&gt;
+        &lt;/GuestLayout&gt;
     );
 }
