@@ -1,0 +1,84 @@
+檔案路徑：resources\js\Pages\Profile\Partials\DeleteUserForm.jsx
+
+import { useRef, useState } from 'react';
+import DangerButton from '@/Components/DangerButton';
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import Modal from '@/Components/Modal';
+import SecondaryButton from '@/Components/SecondaryButton';
+import TextInput from '@/Components/TextInput';
+import { useForm } from '@inertiajs/react';
+export default function DeleteUserForm({ className = '' }) {
+    const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
+    const passwordInput = useRef();
+    const {
+        data,
+        setData,
+        delete: destroy,
+        processing,
+        reset,
+        errors,
+        clearErrors,
+    } = useForm({
+        password: '',
+    });
+    const confirmUserDeletion = () =&gt; {
+        setConfirmingUserDeletion(true);
+    };
+    const deleteUser = (e) =&gt; {
+        e.preventDefault();
+        destroy(route('profile.destroy'), {
+            preserveScroll: true,
+            onSuccess: () =&gt; closeModal(),
+            onError: () =&gt; passwordInput.current.focus(),
+            onFinish: () =&gt; reset(),
+        });
+    };
+    const closeModal = () =&gt; {
+        setConfirmingUserDeletion(false);
+        clearErrors();
+        reset();
+    };
+    return (
+        &lt;section className={&#96;space-y-6 ${className}&#96;}&gt;
+            &lt;header&gt;
+                &lt;h2 className="text-lg font-medium text-gray-900"&gt;刪除帳號&lt;/h2&gt;
+                &lt;p className="mt-1 text-sm text-gray-600"&gt;
+                    一旦您的帳號被刪除，所有相關的資源與資料將會被永久清除。在刪除帳號之前，請務必先下載或備份您希望保留的任何資料。
+                &lt;/p&gt;
+            &lt;/header&gt;
+            &lt;DangerButton onClick={confirmUserDeletion}&gt;刪除帳號&lt;/DangerButton&gt;
+            &lt;Modal show={confirmingUserDeletion} onClose={closeModal}&gt;
+                &lt;form onSubmit={deleteUser} className="p-6"&gt;
+                    &lt;h2 className="text-lg font-medium text-gray-900"&gt;
+                        您確定要刪除帳號嗎？
+                    &lt;/h2&gt;
+                    &lt;p className="mt-1 text-sm text-gray-600"&gt;
+                        一旦您的帳號被刪除，所有相關的資源與資料將會被永久清除。請輸入您的密碼，以確認您希望永久刪除此帳號。
+                    &lt;/p&gt;
+                    &lt;div className="mt-6"&gt;
+                        &lt;InputLabel htmlFor="password" value="密碼" className="sr-only" /&gt;
+                        &lt;TextInput
+                            id="password"
+                            type="password"
+                            name="password"
+                            ref={passwordInput}
+                            value={data.password}
+                            onChange={(e) =&gt; setData('password', e.target.value)}
+                            className="mt-1 block w-3/4"
+                            isFocused
+                            placeholder="請輸入密碼"
+                        /&gt;
+                        &lt;InputError message={errors.password} className="mt-2" /&gt;
+                    &lt;/div&gt;
+                    &lt;div className="mt-6 flex justify-end gap-3"&gt;
+                        &lt;SecondaryButton onClick={closeModal}&gt;取消&lt;/SecondaryButton&gt;
+                        &lt;DangerButton className="ms-3" disabled={processing}&gt;
+                            確認刪除帳號
+                        &lt;/DangerButton&gt;
+                    &lt;/div&gt;
+                &lt;/form&gt;
+            &lt;/Modal&gt;
+        &lt;/section&gt;
+    );
+}

@@ -1,0 +1,37 @@
+檔案路徑：resources\js\Pages\Profile\Edit.jsx
+
+import DeleteUserForm from './Partials/DeleteUserForm';
+import UpdatePasswordForm from './Partials/UpdatePasswordForm';
+import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
+import { Head, Link } from '@inertiajs/react';
+import Navbar from '@/Components/Navbar'; 
+export default function Edit({ mustVerifyEmail, status }) {
+    return (
+        &lt;div className="min-h-screen bg-gray-50 pb-12"&gt;
+            &lt;Head title="個人資料設定 - PinkPick" /&gt;
+            &lt;Navbar /&gt;
+            &lt;div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8"&gt;
+                &lt;div className="mb-6"&gt;
+                    &lt;Link href={route('shop')} className="text-sm text-gray-500 hover:text-pink-600 transition"&gt;
+                        ← 返回商城首頁
+                    &lt;/Link&gt;
+                &lt;/div&gt;
+                &lt;div className="space-y-6"&gt;
+                    &lt;div className="p-4 sm:p-8 bg-white shadow sm:rounded-lg"&gt;
+                        &lt;UpdateProfileInformationForm
+                            mustVerifyEmail={mustVerifyEmail}
+                            status={status}
+                            className="max-w-xl"
+                        /&gt;
+                    &lt;/div&gt;
+                    &lt;div className="p-4 sm:p-8 bg-white shadow sm:rounded-lg"&gt;
+                        &lt;UpdatePasswordForm className="max-w-xl" /&gt;
+                    &lt;/div&gt;
+                    &lt;div className="p-4 sm:p-8 bg-white shadow sm:rounded-lg"&gt;
+                        &lt;DeleteUserForm className="max-w-xl" /&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    );
+}

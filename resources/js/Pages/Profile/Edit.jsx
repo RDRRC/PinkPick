@@ -1,23 +1,29 @@
-import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+// 檔案路徑：resources/js/Pages/Profile/Edit.jsx
+
 import DeleteUserForm from './Partials/DeleteUserForm';
 import UpdatePasswordForm from './Partials/UpdatePasswordForm';
 import UpdateProfileInformationForm from './Partials/UpdateProfileInformationForm';
+import { Head, Link } from '@inertiajs/react';
+import Navbar from '@/Components/Navbar'; // 🌟 引入你的商城導覽列
 
 export default function Edit({ mustVerifyEmail, status }) {
     return (
-        <AuthenticatedLayout
-            header={
-                <h2 className="text-xl font-semibold leading-tight text-gray-800">
-                    Profile
-                </h2>
-            }
-        >
-            <Head title="Profile" />
+        <div className="min-h-screen bg-gray-50 pb-12">
+            <Head title="個人資料設定 - PinkPick" />
 
-            <div className="py-12">
-                <div className="mx-auto max-w-7xl space-y-6 sm:px-6 lg:px-8">
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+            {/* 🌟 換成我們自己的 Navbar，保持全站一致 */}
+            <Navbar />
+
+            <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 mt-8">
+                {/* 🌟 新增：返回商城首頁的動線 */}
+                <div className="mb-6">
+                    <Link href={route('shop')} className="text-sm text-gray-500 hover:text-pink-600 transition">
+                        ← 返回商城首頁
+                    </Link>
+                </div>
+
+                <div className="space-y-6">
+                    <div className="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                         <UpdateProfileInformationForm
                             mustVerifyEmail={mustVerifyEmail}
                             status={status}
@@ -25,15 +31,15 @@ export default function Edit({ mustVerifyEmail, status }) {
                         />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                         <UpdatePasswordForm className="max-w-xl" />
                     </div>
 
-                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                    <div className="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
                         <DeleteUserForm className="max-w-xl" />
                     </div>
                 </div>
             </div>
-        </AuthenticatedLayout>
+        </div>
     );
 }

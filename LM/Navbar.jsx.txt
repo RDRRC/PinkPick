@@ -56,6 +56,13 @@ export default function Navbar() {
                                 {isDropdownOpen && (
                                     &lt;div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-md shadow-lg py-1 z-50"&gt;
                                         &lt;Link
+                                            href={route('profile.edit')}
+                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700"
+                                            onClick={() =&gt; setIsDropdownOpen(false)}
+                                        &gt;
+                                            個人資料設定
+                                        &lt;/Link&gt;
+                                        &lt;Link
                                             href="/member/orders"
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700"
                                             onClick={() =&gt; setIsDropdownOpen(false)}

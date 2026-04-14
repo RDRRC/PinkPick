@@ -1,0 +1,115 @@
+檔案路徑：resources\js\Pages\Profile\Partials\UpdateProfileInformationForm.jsx
+
+import InputError from '@/Components/InputError';
+import InputLabel from '@/Components/InputLabel';
+import PrimaryButton from '@/Components/PrimaryButton';
+import TextInput from '@/Components/TextInput';
+import { Link, useForm, usePage } from '@inertiajs/react';
+import { Transition } from '@headlessui/react';
+export default function UpdateProfileInformation({ mustVerifyEmail, status, className = '' }) {
+    const user = usePage().props.auth.user;
+    const { data, setData, patch, errors, processing, recentlySuccessful } = useForm({
+        name: user.name,
+        email: user.email,
+        phone: user.phone || '',     
+        address: user.address || '', 
+    });
+    const submit = (e) =&gt; {
+        e.preventDefault();
+        patch(route('profile.update'));
+    };
+    return (
+        &lt;section className={className}&gt;
+            &lt;header&gt;
+                &lt;h2 className="text-lg font-medium text-gray-900"&gt;基本資料設定&lt;/h2&gt;
+                &lt;p className="mt-1 text-sm text-gray-600"&gt;
+                    更新您的帳號名稱、電子郵件以及預設收件資訊。
+                &lt;/p&gt;
+            &lt;/header&gt;
+            &lt;form onSubmit={submit} className="mt-6 space-y-6"&gt;
+                &lt;div&gt;
+                    &lt;InputLabel htmlFor="name" value="姓名" /&gt;
+                    &lt;TextInput
+                        id="name"
+                        className="mt-1 block w-full"
+                        value={data.name}
+                        onChange={(e) =&gt; setData('name', e.target.value)}
+                        required
+                        isFocused
+                        autoComplete="name"
+                    /&gt;
+                    &lt;InputError className="mt-2" message={errors.name} /&gt;
+                &lt;/div&gt;
+                &lt;div&gt;
+                    &lt;InputLabel htmlFor="email" value="電子郵件" /&gt;
+                    &lt;TextInput
+                        id="email"
+                        type="email"
+                        className="mt-1 block w-full"
+                        value={data.email}
+                        onChange={(e) =&gt; setData('email', e.target.value)}
+                        required
+                        autoComplete="username"
+                    /&gt;
+                    &lt;InputError className="mt-2" message={errors.email} /&gt;
+                &lt;/div&gt;
+                &lt;div&gt;
+                    &lt;InputLabel htmlFor="phone" value="常用聯絡電話" /&gt;
+                    &lt;TextInput
+                        id="phone"
+                        type="tel"
+                        className="mt-1 block w-full"
+                        value={data.phone}
+                        onChange={(e) =&gt; setData('phone', e.target.value)}
+                        placeholder="0912345678"
+                    /&gt;
+                    &lt;InputError className="mt-2" message={errors.phone} /&gt;
+                &lt;/div&gt;
+                &lt;div&gt;
+                    &lt;InputLabel htmlFor="address" value="預設收件地址" /&gt;
+                    &lt;TextInput
+                        id="address"
+                        type="text"
+                        className="mt-1 block w-full"
+                        value={data.address}
+                        onChange={(e) =&gt; setData('address', e.target.value)}
+                        placeholder="請輸入完整收件地址"
+                    /&gt;
+                    &lt;InputError className="mt-2" message={errors.address} /&gt;
+                &lt;/div&gt;
+                {mustVerifyEmail && user.email_verified_at === null && (
+                    &lt;div&gt;
+                        &lt;p className="text-sm mt-2 text-gray-800"&gt;
+                            您的電子郵件尚未驗證。
+                            &lt;Link
+                                href={route('verification.send')}
+                                method="post"
+                                as="button"
+                                className="underline text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500"
+                            &gt;
+                                點此重新發送驗證信。
+                            &lt;/Link&gt;
+                        &lt;/p&gt;
+                        {status === 'verification-link-sent' && (
+                            &lt;div className="mt-2 font-medium text-sm text-green-600"&gt;
+                                新的驗證連結已發送至您的信箱。
+                            &lt;/div&gt;
+                        )}
+                    &lt;/div&gt;
+                )}
+                &lt;div className="flex items-center gap-4"&gt;
+                    &lt;PrimaryButton disabled={processing}&gt;儲存設定&lt;/PrimaryButton&gt;
+                    &lt;Transition
+                        show={recentlySuccessful}
+                        enter="transition ease-in-out"
+                        enterFrom="opacity-0"
+                        leave="transition ease-in-out"
+                        leaveTo="opacity-0"
+                    &gt;
+                        &lt;p className="text-sm text-green-600 font-medium"&gt;儲存成功。&lt;/p&gt;
+                    &lt;/Transition&gt;
+                &lt;/div&gt;
+            &lt;/form&gt;
+        &lt;/section&gt;
+    );
+}
