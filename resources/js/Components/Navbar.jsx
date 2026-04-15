@@ -69,6 +69,19 @@ export default function Navbar() {
                                 {/* 下拉選單內容 */}
                                 {isDropdownOpen && (
                                     <div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-md shadow-lg py-1 z-50">
+                                        {/* 🌟 完美：精準的前端權限控管 */}
+                                        {auth?.user?.email === 'admin@pinkpick.com' && (
+                                            <>
+                                                <Link
+                                                    href={route('admin.orders.index')}
+                                                    className="block px-4 py-2 text-sm text-pink-600 font-bold hover:bg-pink-50"
+                                                    onClick={() => setIsDropdownOpen(false)}
+                                                >
+                                                    後台訂單管理
+                                                </Link>
+                                                <div className="border-t border-gray-100 my-1"></div>
+                                            </>
+                                        )}
                                         {/* 🌟 新增：個人資料連結 */}
                                         <Link
                                             href={route('profile.edit')}
@@ -77,6 +90,7 @@ export default function Navbar() {
                                         >
                                             個人資料設定
                                         </Link>
+                                        <div className="border-t border-gray-100 my-1"></div>
                                         <Link
                                             href="/member/orders"
                                             className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700"
@@ -93,6 +107,7 @@ export default function Navbar() {
                                         >
                                             登出
                                         </Link>
+                                        <div className="border-t border-gray-100 my-1"></div>
                                     </div>
                                 )}
                             </div>

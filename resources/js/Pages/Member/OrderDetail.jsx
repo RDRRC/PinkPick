@@ -24,13 +24,9 @@ export default function OrderDetail({ order }) {
                             <p className="text-sm text-gray-500 mt-1">{order.order_number}</p>
                         </div>
                         <div className="text-right">
-                            <span className={`px-3 py-1 rounded-full text-xs font-bold
-                                ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                    order.status === 'paid' ? 'bg-blue-100 text-blue-800' :
-                                        order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                            'bg-gray-100 text-gray-800'}`}>
-                                {order.status.toUpperCase()}
-                            </span>
+                            {/* 🌟 2. 替換為極度乾淨的寫法 */}
+                            <OrderStatusBadge status={order.status} />
+
                             <p className="text-sm text-gray-500 mt-2">
                                 成立時間：{new Date(order.created_at).toLocaleString('zh-TW')}
                             </p>

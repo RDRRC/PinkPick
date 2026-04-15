@@ -10,8 +10,9 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'PinkPick 系統管理員',
+            'email' => 'admin@pinkpick.com',
+            'password' => bcrypt('password'), 
         ]);
         $this->call([
             ShopSeeder::class,

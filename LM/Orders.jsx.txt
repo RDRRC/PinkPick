@@ -3,6 +3,7 @@
 import React from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import Navbar from '../../Components/Navbar';
+import OrderStatusBadge from '@/Components/OrderStatusBadge'; 
 export default function Orders({ orders }) {
     const { auth } = usePage().props;
     return (
@@ -49,12 +50,7 @@ export default function Orders({ orders }) {
                                         &lt;p className="font-medium text-pink-600"&gt;${Number(order.total_amount).toLocaleString()}&lt;/p&gt;
                                     &lt;/div&gt;
                                     &lt;div&gt;
-                                        &lt;span className={&#96;px-3 py-1 rounded-full text-xs font-medium 
-                                            ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                    'bg-gray-100 text-gray-800'}&#96;}&gt;
-                                            {order.status}
-                                        &lt;/span&gt;
+                                        &lt;OrderStatusBadge status={order.status} /&gt;
                                         &lt;Link
                                             href={route('member.orders.show', order.order_number)}
                                             className="ml-4 text-sm text-pink-600 hover:text-pink-800 font-bold underline transition"

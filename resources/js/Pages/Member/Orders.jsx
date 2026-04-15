@@ -2,6 +2,7 @@
 import React from 'react';
 import { Head, Link, usePage } from '@inertiajs/react';
 import Navbar from '../../Components/Navbar';
+import OrderStatusBadge from '@/Components/OrderStatusBadge'; // 🌟 1. 引入元件
 
 export default function Orders({ orders }) {
     const { auth } = usePage().props;
@@ -54,13 +55,8 @@ export default function Orders({ orders }) {
                                         <p className="font-medium text-pink-600">${Number(order.total_amount).toLocaleString()}</p>
                                     </div>
                                     <div>
-                                        <span className={`px-3 py-1 rounded-full text-xs font-medium 
-                                            ${order.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                order.status === 'completed' ? 'bg-green-100 text-green-800' :
-                                                    'bg-gray-100 text-gray-800'}`}>
-                                            {/* 這裡可以寫一個狀態對應表，暫時先直接顯示英文或簡單判斷 */}
-                                            {order.status}
-                                        </span>
+                                        {/* 🌟 1. 替換原本落落長的 span，改用我們乾淨的共用元件 */}
+                                        <OrderStatusBadge status={order.status} />
                                         {/* 🌟 優化：使用 Ziggy 命名路由並帶入參數 */}
                                         <Link
                                             href={route('member.orders.show', order.order_number)}

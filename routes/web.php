@@ -4,6 +4,7 @@ use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShopController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
+use App\Http\Controllers\AdminOrderController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -44,6 +45,15 @@ Route::middleware('auth')->group(function () {
 
     // 🌟 補上這行：訂單詳情路由
     Route::get('/member/orders/{order_number}', [OrderController::class, 'show'])->name('member.orders.show');
+
+    // 🌟 修正：將原本落落長的 function 刪除，改為極度簡潔的 'can:admin'
+    Route::middleware(['can:admin'])
+        ->prefix('admin')
+        ->name('admin.')
+        ->group(function () {
+            Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
+            Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update_status');
+        });
 });
 
 require __DIR__ . '/auth.php';

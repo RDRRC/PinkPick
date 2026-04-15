@@ -1,31 +1,18 @@
-<?php
+檔案路徑：app\Providers\AppServiceProvider.php
 
 namespace App\Providers;
-
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Gate; // 🌟 記得引入 Gate
-use App\Models\User; // 🌟 記得引入 User 模型
-
+use Illuminate\Support\Facades\Gate; 
+use App\Models\User; 
 class AppServiceProvider extends ServiceProvider
 {
-    /**
-     * Register any application services.
-     */
     public function register(): void
     {
-        //
     }
-
-    /**
-     * Bootstrap any application services.
-     */
     public function boot(): void
     {
-        // 原本加速前端資源載入的設定 (保留)
         Vite::prefetch(concurrency: 3);
-
-        // 🌟 新增：定義超級管理員的權限閘門
         Gate::define('admin', function (User $user) {
             return $user->email === 'admin@pinkpick.com';
         });

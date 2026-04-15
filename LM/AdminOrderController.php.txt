@@ -1,0 +1,28 @@
+檔案路徑：app\Http\Controllers\AdminOrderController.php
+
+namespace App\Http\Controllers;
+use App\Models\Order;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+use Illuminate\Support\Facades\Auth; 
+class AdminOrderController extends Controller
+{
+    public function index()
+    {
+        $orders = Order::with(['items.product'])
+            ->orderBy('created_at', 'desc')
+            ->paginate(20);
+        return Inertia::render('Admin/OrderManagement', [
+            'orders' => $orders
+        ]);
+    }
+    public function updateStatus(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'status' => 'required|in:pending,paid,shipped,completed,cancelled'
+        ]);
+        $order = Order::findOrFail($id);
+        $order->update(['status' => $validated['status']]);
+        return back();
+    }
+}

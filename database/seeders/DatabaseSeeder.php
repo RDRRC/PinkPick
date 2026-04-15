@@ -15,11 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
+        // 🌟 預設建立超級管理員帳號
         User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
+            'name' => 'PinkPick 系統管理員',
+            'email' => 'admin@pinkpick.com',
+            'password' => bcrypt('password'), // 面試展示用預設密碼
         ]);
 
         // 👇 新增這行，讓系統自動呼叫你的商品種子檔

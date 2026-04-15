@@ -21,6 +21,14 @@ export default function Cart() {
             <Navbar />
 
             <div className="max-w-7xl mx-auto px-4 mt-8">
+
+                {/* 🌟 新增：返回商城首頁的動線 */}
+                <div className="mb-6">
+                    <Link href={route('shop')} className="text-sm text-gray-500 hover:text-pink-600 transition font-medium">
+                        ← 返回商城首頁
+                    </Link>
+                </div>
+
                 <h1 className="text-3xl font-bold text-gray-800 mb-8">購物車清單</h1>
 
                 {cartItems.length === 0 ? (

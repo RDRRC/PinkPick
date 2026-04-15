@@ -1,0 +1,104 @@
+檔案路徑：resources\js\Pages\Admin\OrderManagement.jsx
+
+import React, { useState } from 'react';
+import { Head, router } from '@inertiajs/react';
+import Navbar from '@/Components/Navbar';
+import Pagination from '@/Components/Pagination'; 
+export default function OrderManagement({ orders }) {
+    const [processingId, setProcessingId] = useState(null);
+    const handleStatusChange = (orderId, newStatus) =&gt; {
+        setProcessingId(orderId);
+        router.patch(route('admin.orders.update_status', orderId), {
+            status: newStatus
+        }, {
+            preserveScroll: true,
+            onFinish: () =&gt; setProcessingId(null),
+        });
+    };
+    const handlePageChange = (newPage) =&gt; {
+        router.get(route('admin.orders.index'), { page: newPage }, {
+            preserveScroll: true
+        });
+    };
+    const statusMap = {
+        pending: '待處理 (Pending)',
+        paid: '已付款 (Paid)',
+        shipped: '已出貨 (Shipped)',
+        completed: '已完成 (Completed)',
+        cancelled: '已取消 (Cancelled)'
+    };
+    return (
+        &lt;div className="min-h-screen bg-gray-50 pb-12"&gt;
+            &lt;Head title="後台訂單管理 - PinkPick" /&gt;
+            &lt;Navbar /&gt;
+            &lt;div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8"&gt;
+                &lt;div className="mb-6 flex justify-between items-center"&gt;
+                    &lt;h1 className="text-2xl font-bold text-gray-900"&gt;🚀 後台管理：所有訂單&lt;/h1&gt;
+                &lt;/div&gt;
+                &lt;div className="bg-white rounded-lg shadow-sm overflow-hidden"&gt;
+                    &lt;div className="overflow-x-auto"&gt;
+                        &lt;table className="w-full text-left border-collapse"&gt;
+                            &lt;thead&gt;
+                                &lt;tr className="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider"&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;訂單編號 / 時間&lt;/th&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;買家資訊&lt;/th&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;總金額&lt;/th&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;狀態變更&lt;/th&gt;
+                                &lt;/tr&gt;
+                            &lt;/thead&gt;
+                            &lt;tbody className="divide-y divide-gray-200"&gt;
+                                {orders.data.map((order) =&gt; (
+                                    &lt;tr key={order.id} className="hover:bg-gray-50 transition"&gt;
+                                        &lt;td className="px-6 py-4"&gt;
+                                            &lt;div className="font-bold text-gray-800"&gt;{order.order_number}&lt;/div&gt;
+                                            &lt;div className="text-xs text-gray-500 mt-1"&gt;
+                                                {new Date(order.created_at).toLocaleString('zh-TW')}
+                                            &lt;/div&gt;
+                                        &lt;/td&gt;
+                                        &lt;td className="px-6 py-4"&gt;
+                                            &lt;div className="text-sm font-medium text-gray-800"&gt;{order.recipient_name}&lt;/div&gt;
+                                            &lt;div className="text-xs text-gray-500"&gt;{order.recipient_phone}&lt;/div&gt;
+                                        &lt;/td&gt;
+                                        &lt;td className="px-6 py-4 font-bold text-pink-600"&gt;
+                                            ${Number(order.total_amount).toLocaleString()}
+                                        &lt;/td&gt;
+                                        &lt;td className="px-6 py-4"&gt;
+                                            &lt;div className="flex items-center gap-2"&gt;
+                                                &lt;select
+                                                    value={order.status}
+                                                    onChange={(e) =&gt; handleStatusChange(order.id, e.target.value)}
+                                                    disabled={processingId === order.id}
+                                                    className={&#96;text-sm border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500
+                                                        ${order.status === 'completed' ? 'bg-green-50 text-green-700 font-bold' :
+                                                            order.status === 'pending' ? 'bg-yellow-50 text-yellow-700 font-bold' : ''}
+                                                    &#96;}
+                                                &gt;
+                                                    {Object.entries(statusMap).map(([key, label]) =&gt; (
+                                                        &lt;option key={key} value={key}&gt;{label}&lt;/option&gt;
+                                                    ))}
+                                                &lt;/select&gt;
+                                                {processingId === order.id && &lt;span className="text-xs text-gray-400"&gt;更新中...&lt;/span&gt;}
+                                            &lt;/div&gt;
+                                        &lt;/td&gt;
+                                    &lt;/tr&gt;
+                                ))}
+                            &lt;/tbody&gt;
+                        &lt;/table&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                {orders.data.length === 0 && (
+                    &lt;div className="text-center py-12 text-gray-500"&gt;目前還沒有任何訂單。&lt;/div&gt;
+                )}
+                {orders.data.length &gt; 0 && orders.last_page &gt; 1 && (
+                    &lt;div className="mt-6 pb-6"&gt;
+                        &lt;Pagination
+                            page={orders.current_page}
+                            lastPage={orders.last_page}
+                            onPageChange={handlePageChange}
+                        /&gt;
+                    &lt;/div&gt;
+                )}
+            &lt;/div&gt;
+        &lt;/div&gt;
+    );
+}
