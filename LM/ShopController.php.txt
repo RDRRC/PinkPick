@@ -1,12 +1,21 @@
 檔案路徑：app\Http\Controllers\ShopController.php
 
 namespace App\Http\Controllers;
+use App\Models\Product; 
 use Illuminate\Http\Request;
 use Inertia\Inertia; 
 class ShopController extends Controller
 {
     public function index()
     {
-        return Inertia::render('Shop'); 
+        return Inertia::render('Shop');
+    }
+    public function show($id)
+    {
+        $product = Product::with(['category', 'attributes.attribute'])->findOrFail($id);
+        abort_if(!$product->is_active, 404, '該商品已下架或不存在');
+        return Inertia::render('ProductDetail', [
+            'product' => $product
+        ]);
     }
 }

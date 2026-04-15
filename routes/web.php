@@ -12,6 +12,8 @@ use Inertia\Inertia;
 
 Route::redirect('/', '/shop');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop'); // 移到上方整理
+// 🌟 新增：商品詳情頁路由
+Route::get('/products/{id}', [ShopController::class, 'show'])->name('products.show');
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');

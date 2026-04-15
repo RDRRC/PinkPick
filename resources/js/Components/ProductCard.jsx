@@ -1,6 +1,7 @@
 // 檔案路徑: resources/js/Components/ProductCard.jsx
 import React, { useState } from 'react';
 import { useCart } from '../Contexts/CartContext';
+import { Link } from '@inertiajs/react';
 
 export default function ProductCard({ product }) {
     const { addToCart } = useCart();
@@ -107,15 +108,25 @@ export default function ProductCard({ product }) {
 
     return (
         <div className="bg-white rounded-lg shadow hover:shadow-lg transition overflow-hidden group relative flex flex-col h-full">
-            <div className="h-48 bg-gray-200 flex items-center justify-center text-gray-400 group-hover:bg-gray-300 transition">
-                Product Image
-            </div>
+            {/* 🌟 修改 1：將圖片區塊改為可點擊的 Link */}
+            {/* 🌟 視覺優化：外層加上 overflow-hidden 與 group */}
+            <Link href={route('products.show', product.id)} className="block h-48 bg-gray-200 overflow-hidden group">
+                {/* 🌟 內部加上 transform 與 hover:scale-105 動畫 */}
+                <div className="w-full h-full flex items-center justify-center text-gray-400 transition-transform duration-300 group-hover:scale-105 group-hover:bg-gray-300">
+                    Product Image
+                </div>
+            </Link>
 
             <div className="p-4 flex flex-col flex-grow">
                 <div className="text-xs text-pink-600 font-bold mb-1">
                     {product.category ? product.category.name : '未分類'}
                 </div>
-                <h3 className="font-bold text-gray-800 truncate">{product.name}</h3>
+                {/* 🌟 修改 2：將商品標題改為可點擊的 Link */}
+                <h3 className="font-bold text-gray-800 truncate">
+                    <Link href={route('products.show', product.id)} className="hover:text-pink-600 transition">
+                        {product.name}
+                    </Link>
+                </h3>
 
                 <div className="mt-2 flex justify-between items-center mb-4">
                     <span className="text-lg font-bold text-red-600">
@@ -130,8 +141,8 @@ export default function ProductCard({ product }) {
                     onClick={handleInitialAdd}
                     disabled={product.stock <= 0 || isSubmitting}
                     className={`mt-auto w-full py-2 rounded text-sm transition font-bold ${product.stock > 0
-                            ? 'bg-pink-600 text-white hover:bg-pink-700 disabled:bg-pink-400'
-                            : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                        ? 'bg-pink-600 text-white hover:bg-pink-700 disabled:bg-pink-400'
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                         }`}
                 >
                     {isSubmitting ? '處理中...' : (product.stock > 0 ? '加入購物車' : '補貨中')}
@@ -160,8 +171,8 @@ export default function ProductCard({ product }) {
                                             key={val.id}
                                             onClick={(e) => handleOptionChange(e, attrId, val.id)}
                                             className={`px-4 py-2 border rounded-md text-sm transition ${selectedOptions[attrId] === val.id
-                                                    ? 'bg-pink-600 text-white border-pink-600 font-bold'
-                                                    : 'bg-white text-gray-700 border-gray-300 hover:border-pink-500'
+                                                ? 'bg-pink-600 text-white border-pink-600 font-bold'
+                                                : 'bg-white text-gray-700 border-gray-300 hover:border-pink-500'
                                                 }`}
                                         >
                                             {val.value}

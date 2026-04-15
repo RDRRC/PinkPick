@@ -1,0 +1,148 @@
+檔案路徑：resources\js\Pages\ProductDetail.jsx
+
+import React, { useState } from 'react';
+import { Head, Link } from '@inertiajs/react';
+import Navbar from '@/Components/Navbar';
+import { useCart } from '@/Contexts/CartContext';
+export default function ProductDetail({ product }) {
+    const { addToCart } = useCart();
+    const [selectedOptions, setSelectedOptions] = useState({});
+    const [quantity, setQuantity] = useState(1);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [localError, setLocalError] = useState(null);
+    const [successMsg, setSuccessMsg] = useState(null); 
+    const groupedAttributes = product.attributes?.reduce((acc, attr) =&gt; {
+        const groupId = attr.attribute_id;
+        if (!acc[groupId]) {
+            acc[groupId] = {
+                name: attr.attribute?.name || &#96;規格 ${groupId}&#96;,
+                values: []
+            };
+        }
+        acc[groupId].values.push(attr);
+        return acc;
+    }, {}) || {};
+    const hasAttributes = Object.keys(groupedAttributes).length &gt; 0;
+    const handleOptionChange = (attributeId, valueId) =&gt; {
+        setSelectedOptions(prev =&gt; ({
+            ...prev,
+            [attributeId]: Number(valueId)
+        }));
+        setLocalError(null);
+        setSuccessMsg(null);
+    };
+    const handleQuantityChange = (val) =&gt; {
+        let validQuantity = parseInt(val, 10);
+        if (isNaN(validQuantity) || validQuantity &lt; 1) validQuantity = 1;
+        if (validQuantity &gt; product.stock) validQuantity = product.stock;
+        setQuantity(validQuantity);
+        setSuccessMsg(null);
+    };
+    const handleAddToCart = async () =&gt; {
+        setLocalError(null);
+        setSuccessMsg(null);
+        const requiredGroupsCount = Object.keys(groupedAttributes).length;
+        const selectedGroupsCount = Object.keys(selectedOptions).length;
+        if (requiredGroupsCount !== selectedGroupsCount) {
+            setLocalError("請完整選擇所有商品規格");
+            return;
+        }
+        setIsSubmitting(true);
+        try {
+            await addToCart(product.id, quantity, selectedOptions);
+            setSuccessMsg("✅ 已成功加入購物車！");
+            setQuantity(1);
+        } catch (error) {
+            setLocalError(error.response?.data?.message || "加入購物車失敗，請稍後再試");
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+    return (
+        &lt;div className="min-h-screen bg-gray-50 pb-12"&gt;
+            &lt;Head title={&#96;${product.name} - PinkPick&#96;} /&gt;
+            &lt;Navbar /&gt;
+            &lt;div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8"&gt;
+                &lt;div className="mb-6"&gt;
+                    &lt;Link href={route('shop')} className="text-sm text-gray-500 hover:text-pink-600 transition font-medium"&gt;
+                        ← 返回商城購物
+                    &lt;/Link&gt;
+                &lt;/div&gt;
+                &lt;div className="bg-white rounded-2xl shadow-sm overflow-hidden"&gt;
+                    &lt;div className="flex flex-col md:flex-row"&gt;
+                        &lt;div className="md:w-1/2 p-8 flex items-center justify-center bg-gray-100 min-h-[400px]"&gt;
+                            &lt;span className="text-gray-400 text-2xl font-bold tracking-widest"&gt;
+                                {product.name} Image
+                            &lt;/span&gt;
+                        &lt;/div&gt;
+                        &lt;div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center"&gt;
+                            &lt;div className="text-sm text-pink-600 font-bold mb-2 tracking-wide uppercase"&gt;
+                                {product.category?.name || '未分類'}
+                            &lt;/div&gt;
+                            &lt;h1 className="text-3xl font-extrabold text-gray-900 mb-4"&gt;{product.name}&lt;/h1&gt;
+                            &lt;div className="flex items-end gap-4 mb-6 pb-6 border-b border-gray-100"&gt;
+                                &lt;span className="text-4xl font-black text-red-600"&gt;
+                                    ${Number(product.price).toLocaleString()}
+                                &lt;/span&gt;
+                                &lt;span className={&#96;text-sm mb-1 ${product.stock &gt; 0 ? 'text-gray-500' : 'text-red-500 font-bold'}&#96;}&gt;
+                                    {product.stock &gt; 0 ? &#96;庫存餘裕: ${product.stock} 件&#96; : '商品已售完'}
+                                &lt;/span&gt;
+                            &lt;/div&gt;
+                            {product.description && (
+                                &lt;div className="mb-8 text-gray-600 leading-relaxed text-sm"&gt;
+                                    {product.description}
+                                &lt;/div&gt;
+                            )}
+                            {Object.entries(groupedAttributes).map(([attrId, group]) =&gt; (
+                                &lt;div key={attrId} className="mb-6"&gt;
+                                    &lt;label className="block text-sm font-bold text-gray-800 mb-3"&gt;{group.name}&lt;/label&gt;
+                                    &lt;div className="flex flex-wrap gap-3"&gt;
+                                        {group.values.map((val) =&gt; (
+                                            &lt;button
+                                                key={val.id}
+                                                onClick={() =&gt; handleOptionChange(attrId, val.id)}
+                                                className={&#96;px-5 py-2.5 border-2 rounded-lg text-sm transition font-medium ${selectedOptions[attrId] === val.id
+                                                    ? 'bg-pink-50 border-pink-600 text-pink-700 shadow-sm'
+                                                    : 'bg-white text-gray-600 border-gray-200 hover:border-pink-300 hover:text-pink-600'
+                                                    }&#96;}
+                                            &gt;
+                                                {val.value}
+                                            &lt;/button&gt;
+                                        ))}
+                                    &lt;/div&gt;
+                                &lt;/div&gt;
+                            ))}
+                            &lt;div className="mb-6"&gt;
+                                &lt;label className="block text-sm font-bold text-gray-800 mb-3"&gt;購買數量&lt;/label&gt;
+                                &lt;div className="flex gap-4"&gt;
+                                    &lt;div className="flex items-center border-2 border-gray-200 rounded-lg overflow-hidden w-32"&gt;
+                                        &lt;button onClick={() =&gt; handleQuantityChange(quantity - 1)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 transition disabled:opacity-50" disabled={quantity &lt;= 1}&gt;−&lt;/button&gt;
+                                        &lt;input
+                                            type="number"
+                                            value={quantity}
+                                            onChange={(e) =&gt; handleQuantityChange(e.target.value)}
+                                            className="w-full text-center border-none focus:ring-0 text-gray-800 font-bold p-0"
+                                        /&gt;
+                                        &lt;button onClick={() =&gt; handleQuantityChange(quantity + 1)} className="px-4 py-2 text-gray-500 hover:bg-gray-100 transition disabled:opacity-50" disabled={quantity &gt;= product.stock}&gt;+&lt;/button&gt;
+                                    &lt;/div&gt;
+                                    &lt;button
+                                        onClick={handleAddToCart}
+                                        disabled={product.stock &lt;= 0 || isSubmitting}
+                                        className={&#96;flex-1 py-3 rounded-lg text-lg font-bold transition shadow-md ${product.stock &gt; 0
+                                            ? 'bg-pink-600 text-white hover:bg-pink-700 disabled:bg-pink-400'
+                                            : 'bg-gray-300 text-gray-500 cursor-not-allowed shadow-none'
+                                            }&#96;}
+                                    &gt;
+                                        {isSubmitting ? '處理中...' : (product.stock &gt; 0 ? '加入購物車' : '已售完補貨中')}
+                                    &lt;/button&gt;
+                                &lt;/div&gt;
+                            &lt;/div&gt;
+                            {localError && &lt;div className="p-3 bg-red-50 text-red-600 font-medium rounded-lg text-sm border border-red-100 mb-4"&gt;{localError}&lt;/div&gt;}
+                            {successMsg && &lt;div className="p-3 bg-green-50 text-green-700 font-medium rounded-lg text-sm border border-green-100 mb-4"&gt;{successMsg}&lt;/div&gt;}
+                        &lt;/div&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            &lt;/div&gt;
+        &lt;/div&gt;
+    );
+}

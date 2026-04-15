@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 Route::redirect('/', '/shop');
 Route::get('/shop', [ShopController::class, 'index'])->name('shop'); 
+Route::get('/products/{id}', [ShopController::class, 'show'])->name('products.show');
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
 })->middleware(['auth', 'verified'])->name('dashboard');
