@@ -5,6 +5,7 @@ use App\Http\Controllers\ShopController;
 use App\Http\Controllers\CartController;
 use App\Http\Controllers\OrderController;
 use App\Http\Controllers\AdminOrderController;
+use App\Http\Controllers\AdminProductController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -53,6 +54,11 @@ Route::middleware('auth')->group(function () {
         ->group(function () {
             Route::get('/orders', [AdminOrderController::class, 'index'])->name('orders.index');
             Route::patch('/orders/{id}/status', [AdminOrderController::class, 'updateStatus'])->name('orders.update_status');
+            // 🌟 新增：商品管理 CRUD 路由
+            Route::get('/products', [AdminProductController::class, 'index'])->name('products.index');
+            Route::post('/products', [AdminProductController::class, 'store'])->name('products.store');
+            Route::put('/products/{product}', [AdminProductController::class, 'update'])->name('products.update');
+            Route::delete('/products/{product}', [AdminProductController::class, 'destroy'])->name('products.destroy');
         });
 });
 

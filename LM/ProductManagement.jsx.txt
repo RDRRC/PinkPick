@@ -1,0 +1,261 @@
+檔案路徑：resources\js\Pages\Admin\ProductManagement.jsx
+
+import React, { useState, useRef, useEffect } from 'react';
+import { Head, router, useForm } from '@inertiajs/react';
+import Navbar from '@/Components/Navbar';
+import Pagination from '@/Components/Pagination';
+import { Transition } from '@headlessui/react'; 
+export default function ProductManagement({ products, categories, filters }) {
+    const [isModalOpen, setIsModalOpen] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [keyword, setKeyword] = useState(filters?.keyword || '');
+    const [toastMessage, setToastMessage] = useState('');
+    const toastTimerRef = useRef(null);
+    useEffect(() =&gt; {
+        return () =&gt; {
+            if (toastTimerRef.current) {
+                clearTimeout(toastTimerRef.current);
+            }
+        };
+    }, []);
+    const showToast = (message) =&gt; {
+        setToastMessage(message);
+        if (toastTimerRef.current) {
+            clearTimeout(toastTimerRef.current);
+        }
+        toastTimerRef.current = setTimeout(() =&gt; {
+            setToastMessage('');
+            toastTimerRef.current = null;
+        }, 3000);
+    };
+    const { data, setData, post, put, delete: destroy, reset, errors, clearErrors } = useForm({
+        name: '',
+        category_id: '',
+        price: '',
+        stock: '',
+        description: '',
+        is_active: true,
+    });
+    const handleSearch = (e) =&gt; {
+        e.preventDefault();
+        router.get(route('admin.products.index'), { keyword }, {
+            preserveState: true,
+            preserveScroll: true
+        });
+    };
+    const openCreateModal = () =&gt; {
+        clearErrors();
+        reset();
+        setEditingId(null);
+        setIsModalOpen(true);
+    };
+    const openEditModal = (product) =&gt; {
+        clearErrors();
+        setEditingId(product.id);
+        setData({
+            name: product.name,
+            category_id: product.category_id || '',
+            price: product.price,
+            stock: product.stock,
+            description: product.description || '',
+            is_active: Boolean(product.is_active),
+        });
+        setIsModalOpen(true);
+    };
+    const closeModal = () =&gt; {
+        setIsModalOpen(false);
+        reset();
+    };
+    const handleSubmit = (e) =&gt; {
+        e.preventDefault();
+        if (editingId) {
+            put(route('admin.products.update', editingId), {
+                onSuccess: () =&gt; {
+                    closeModal();
+                    showToast('✅ 商品修改成功！');
+                }
+            });
+        } else {
+            post(route('admin.products.store'), {
+                onSuccess: () =&gt; {
+                    closeModal();
+                    showToast('✅ 新商品已成功上架！');
+                }
+            });
+        }
+    };
+    const handleDelete = (id) =&gt; {
+        if (confirm('確定要刪除這個商品嗎？此操作無法還原。')) {
+            destroy(route('admin.products.destroy', id), {
+                onSuccess: () =&gt; showToast('🗑️ 商品已成功刪除！')
+            });
+        }
+    };
+    const handlePageChange = (newPage) =&gt; {
+        router.get(route('admin.products.index'), { page: newPage, keyword }, { preserveScroll: true });
+    };
+    return (
+        &lt;div className="min-h-screen bg-gray-50 pb-12 relative"&gt;
+            &lt;Head title="後台商品管理 - PinkPick" /&gt;
+            &lt;Navbar /&gt;
+            &lt;div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8"&gt;
+                &lt;div className="mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4"&gt;
+                    &lt;h1 className="text-2xl font-bold text-gray-900"&gt;📦 後台管理：商品維護&lt;/h1&gt;
+                    &lt;div className="flex w-full sm:w-auto items-center gap-3"&gt;
+                        &lt;form onSubmit={handleSearch} className="flex w-full sm:w-auto"&gt;
+                            &lt;input
+                                type="text"
+                                value={keyword}
+                                onChange={(e) =&gt; setKeyword(e.target.value)}
+                                placeholder="搜尋商品名稱..."
+                                className="border-gray-300 rounded-l-md shadow-sm focus:ring-pink-500 focus:border-pink-500 text-sm w-full sm:w-64"
+                            /&gt;
+                            &lt;button type="submit" className="bg-gray-100 border border-l-0 border-gray-300 text-gray-600 px-4 py-2 rounded-r-md hover:bg-gray-200 transition text-sm font-medium"&gt;
+                                搜尋
+                            &lt;/button&gt;
+                        &lt;/form&gt;
+                        &lt;button
+                            onClick={openCreateModal}
+                            className="bg-pink-600 text-white px-4 py-2 rounded-md font-bold hover:bg-pink-700 transition shadow-sm whitespace-nowrap"
+                        &gt;
+                            + 新增商品
+                        &lt;/button&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                &lt;div className="bg-white rounded-lg shadow-sm overflow-hidden"&gt;
+                    &lt;div className="overflow-x-auto"&gt;
+                        &lt;table className="w-full text-left border-collapse"&gt;
+                            &lt;thead&gt;
+                                &lt;tr className="bg-gray-100 text-gray-600 text-sm uppercase tracking-wider"&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;ID / 名稱&lt;/th&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;分類&lt;/th&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;價格&lt;/th&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;庫存&lt;/th&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b"&gt;狀態&lt;/th&gt;
+                                    &lt;th className="px-6 py-4 font-bold border-b text-right"&gt;操作&lt;/th&gt;
+                                &lt;/tr&gt;
+                            &lt;/thead&gt;
+                            &lt;tbody className="divide-y divide-gray-200"&gt;
+                                {products.data.length === 0 ? (
+                                    &lt;tr&gt;
+                                        &lt;td colSpan="6" className="px-6 py-12 text-center text-gray-500"&gt;
+                                            找不到符合「{keyword}」的商品。
+                                        &lt;/td&gt;
+                                    &lt;/tr&gt;
+                                ) : (
+                                    products.data.map((product) =&gt; (
+                                        &lt;tr key={product.id} className="hover:bg-gray-50 transition"&gt;
+                                            &lt;td className="px-6 py-4"&gt;
+                                                &lt;div className="text-xs text-gray-400"&gt;#{product.id}&lt;/div&gt;
+                                                &lt;div className="font-bold text-gray-800"&gt;{product.name}&lt;/div&gt;
+                                            &lt;/td&gt;
+                                            &lt;td className="px-6 py-4 text-sm text-gray-600"&gt;
+                                                {product.category?.name || '無分類'}
+                                            &lt;/td&gt;
+                                            &lt;td className="px-6 py-4 font-bold text-gray-800"&gt;
+                                                ${Number(product.price).toLocaleString()}
+                                            &lt;/td&gt;
+                                            &lt;td className="px-6 py-4 text-sm text-gray-600"&gt;
+                                                {product.stock}
+                                            &lt;/td&gt;
+                                            &lt;td className="px-6 py-4"&gt;
+                                                &lt;span className={&#96;px-2 py-1 rounded text-xs font-bold ${product.is_active ? 'bg-green-100 text-green-700' : 'bg-gray-200 text-gray-600'}&#96;}&gt;
+                                                    {product.is_active ? '上架中' : '已下架'}
+                                                &lt;/span&gt;
+                                            &lt;/td&gt;
+                                            &lt;td className="px-6 py-4 text-right space-x-3"&gt;
+                                                &lt;button onClick={() =&gt; openEditModal(product)} className="text-blue-600 hover:text-blue-800 font-medium text-sm transition"&gt;
+                                                    編輯
+                                                &lt;/button&gt;
+                                                &lt;button onClick={() =&gt; handleDelete(product.id)} className="text-red-600 hover:text-red-800 font-medium text-sm transition"&gt;
+                                                    刪除
+                                                &lt;/button&gt;
+                                            &lt;/td&gt;
+                                        &lt;/tr&gt;
+                                    ))
+                                )}
+                            &lt;/tbody&gt;
+                        &lt;/table&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+                {products.data.length &gt; 0 && products.last_page &gt; 1 && (
+                    &lt;div className="mt-6 pb-6"&gt;
+                        &lt;Pagination page={products.current_page} lastPage={products.last_page} onPageChange={handlePageChange} /&gt;
+                    &lt;/div&gt;
+                )}
+            &lt;/div&gt;
+            &lt;Transition
+                show={!!toastMessage}
+                enter="transform ease-out duration-300 transition"
+                enterFrom="translate-y-2 opacity-0 sm:translate-y-0 sm:translate-x-2"
+                enterTo="translate-y-0 opacity-100 sm:translate-x-0"
+                leave="transition ease-in duration-100"
+                leaveFrom="opacity-100"
+                leaveTo="opacity-0"
+                className="fixed bottom-6 right-6 z-50"
+            &gt;
+                &lt;div className="bg-gray-800 text-white px-6 py-3 rounded-lg shadow-xl flex items-center gap-3"&gt;
+                    &lt;p className="font-medium text-sm"&gt;{toastMessage}&lt;/p&gt;
+                &lt;/div&gt;
+            &lt;/Transition&gt;
+            {isModalOpen && (
+                &lt;div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4"&gt;
+                    &lt;div className="bg-white rounded-lg shadow-xl w-full max-w-lg overflow-hidden"&gt;
+                        &lt;div className="px-6 py-4 border-b flex justify-between items-center bg-gray-50"&gt;
+                            &lt;h2 className="text-xl font-bold text-gray-800"&gt;{editingId ? '編輯商品' : '新增商品'}&lt;/h2&gt;
+                            &lt;button onClick={closeModal} className="text-gray-400 hover:text-gray-600 font-bold text-xl"&gt;✕&lt;/button&gt;
+                        &lt;/div&gt;
+                        &lt;form onSubmit={handleSubmit} className="p-6 space-y-4"&gt;
+                            &lt;div&gt;
+                                &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;商品名稱 *&lt;/label&gt;
+                                &lt;input type="text" value={data.name} onChange={e =&gt; setData('name', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" required /&gt;
+                                {errors.name && &lt;div className="text-red-500 text-xs mt-1"&gt;{errors.name}&lt;/div&gt;}
+                            &lt;/div&gt;
+                            &lt;div className="grid grid-cols-2 gap-4"&gt;
+                                &lt;div&gt;
+                                    &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;分類&lt;/label&gt;
+                                    &lt;select value={data.category_id} onChange={e =&gt; setData('category_id', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"&gt;
+                                        &lt;option value=""&gt;無分類&lt;/option&gt;
+                                        {categories.map(cat =&gt; (
+                                            &lt;option key={cat.id} value={cat.id}&gt;{cat.name}&lt;/option&gt;
+                                        ))}
+                                    &lt;/select&gt;
+                                    {errors.category_id && &lt;div className="text-red-500 text-xs mt-1"&gt;{errors.category_id}&lt;/div&gt;}
+                                &lt;/div&gt;
+                                &lt;div&gt;
+                                    &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;價格 *&lt;/label&gt;
+                                    &lt;input type="number" min="0" value={data.price} onChange={e =&gt; setData('price', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" required /&gt;
+                                    {errors.price && &lt;div className="text-red-500 text-xs mt-1"&gt;{errors.price}&lt;/div&gt;}
+                                &lt;/div&gt;
+                            &lt;/div&gt;
+                            &lt;div className="grid grid-cols-2 gap-4"&gt;
+                                &lt;div&gt;
+                                    &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;庫存數量 *&lt;/label&gt;
+                                    &lt;input type="number" min="0" value={data.stock} onChange={e =&gt; setData('stock', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500" required /&gt;
+                                    {errors.stock && &lt;div className="text-red-500 text-xs mt-1"&gt;{errors.stock}&lt;/div&gt;}
+                                &lt;/div&gt;
+                                &lt;div className="flex items-center mt-6"&gt;
+                                    &lt;label className="flex items-center cursor-pointer"&gt;
+                                        &lt;input type="checkbox" checked={data.is_active} onChange={e =&gt; setData('is_active', e.target.checked)} className="rounded border-gray-300 text-pink-600 shadow-sm focus:ring-pink-500" /&gt;
+                                        &lt;span className="ml-2 text-sm text-gray-700 font-medium"&gt;上架顯示&lt;/span&gt;
+                                    &lt;/label&gt;
+                                &lt;/div&gt;
+                            &lt;/div&gt;
+                            &lt;div&gt;
+                                &lt;label className="block text-sm font-medium text-gray-700 mb-1"&gt;商品描述&lt;/label&gt;
+                                &lt;textarea rows="3" value={data.description} onChange={e =&gt; setData('description', e.target.value)} className="w-full border-gray-300 rounded-md shadow-sm focus:ring-pink-500 focus:border-pink-500"&gt;&lt;/textarea&gt;
+                                {errors.description && &lt;div className="text-red-500 text-xs mt-1"&gt;{errors.description}&lt;/div&gt;}
+                            &lt;/div&gt;
+                            &lt;div className="mt-6 flex justify-end gap-3 pt-4 border-t"&gt;
+                                &lt;button type="button" onClick={closeModal} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-md transition font-medium"&gt;取消&lt;/button&gt;
+                                &lt;button type="submit" className="px-4 py-2 bg-pink-600 text-white rounded-md hover:bg-pink-700 transition font-bold shadow-sm"&gt;
+                                    {editingId ? '儲存修改' : '確認新增'}
+                                &lt;/button&gt;
+                            &lt;/div&gt;
+                        &lt;/form&gt;
+                    &lt;/div&gt;
+                &lt;/div&gt;
+            )}
+        &lt;/div&gt;
+    );
+}

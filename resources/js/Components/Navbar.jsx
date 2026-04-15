@@ -79,6 +79,14 @@ export default function Navbar() {
                                                 >
                                                     後台訂單管理
                                                 </Link>
+                                                {/* 🌟 新增：後台商品管理連結 */}
+                                                <Link
+                                                    href={route('admin.products.index')}
+                                                    className="block px-4 py-2 text-sm text-pink-600 font-bold hover:bg-pink-50"
+                                                    onClick={() => setIsDropdownOpen(false)}
+                                                >
+                                                    後台商品管理
+                                                </Link>
                                                 <div className="border-t border-gray-100 my-1"></div>
                                             </>
                                         )}
