@@ -87,9 +87,17 @@ export default function ProductDetail({ product }) {
 
                         {/* 左側：商品大圖 */}
                         <div className="md:w-1/2 p-8 flex items-center justify-center bg-gray-100 min-h-[400px]">
-                            <span className="text-gray-400 text-2xl font-bold tracking-widest">
-                                {product.name} Image
-                            </span>
+                            {product.image_url ? (
+                                <img
+                                    src={`/storage/${product.image_url}`}
+                                    alt={product.name}
+                                    className="w-full h-auto max-h-[500px] object-cover rounded-xl shadow-sm"
+                                />
+                            ) : (
+                                <span className="text-gray-400 text-2xl font-bold tracking-widest">
+                                    無商品圖片
+                                </span>
+                            )}
                         </div>
 
                         {/* 右側：商品資訊與購買區塊 */}

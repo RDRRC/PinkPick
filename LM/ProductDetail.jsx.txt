@@ -71,9 +71,17 @@ export default function ProductDetail({ product }) {
                 &lt;div className="bg-white rounded-2xl shadow-sm overflow-hidden"&gt;
                     &lt;div className="flex flex-col md:flex-row"&gt;
                         &lt;div className="md:w-1/2 p-8 flex items-center justify-center bg-gray-100 min-h-[400px]"&gt;
-                            &lt;span className="text-gray-400 text-2xl font-bold tracking-widest"&gt;
-                                {product.name} Image
-                            &lt;/span&gt;
+                            {product.image_url ? (
+                                &lt;img
+                                    src={&#96;/storage/${product.image_url}&#96;}
+                                    alt={product.name}
+                                    className="w-full h-auto max-h-[500px] object-cover rounded-xl shadow-sm"
+                                /&gt;
+                            ) : (
+                                &lt;span className="text-gray-400 text-2xl font-bold tracking-widest"&gt;
+                                    無商品圖片
+                                &lt;/span&gt;
+                            )}
                         &lt;/div&gt;
                         &lt;div className="md:w-1/2 p-8 md:p-12 flex flex-col justify-center"&gt;
                             &lt;div className="text-sm text-pink-600 font-bold mb-2 tracking-wide uppercase"&gt;

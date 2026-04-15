@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 class Product extends Model
 {
     use HasFactory;
-    protected $fillable = ['name', 'description', 'price', 'stock', 'is_active', 'category_id'];
+    protected $fillable = ['name', 'description', 'price', 'stock', 'is_active', 'category_id', 'image_url'];
     public function attributes()
     {
         return $this->belongsToMany(AttributeValue::class, 'product_attribute_value', 'product_id', 'attribute_value_id');

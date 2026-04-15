@@ -37,6 +37,8 @@ export default function ProductManagement({ products, categories, filters }) {
         }, 3000);
     };
 
+    const [previewUrl, setPreviewUrl] = useState(null); // 🌟 新增：圖片預覽狀態
+
     const { data, setData, post, put, delete: destroy, reset, errors, clearErrors } = useForm({
         name: '',
         category_id: '',
@@ -44,7 +46,19 @@ export default function ProductManagement({ products, categories, filters }) {
         stock: '',
         description: '',
         is_active: true,
+        image: null, // 🌟 新增 image
     });
+
+    // 🌟 處理圖片選擇與預覽 (修正版)
+    const handleImageChange = (e) => {
+        // 🌟 修正：必須加上 [0] 才能抓到實際的 File 物件
+        const file = e.target.files[0];
+
+        if (file) {
+            setData('image', file);
+            setPreviewUrl(URL.createObjectURL(file));
+        }
+    };
 
     // 🌟 處理搜尋送出
     const handleSearch = (e) => {
@@ -72,7 +86,9 @@ export default function ProductManagement({ products, categories, filters }) {
             stock: product.stock,
             description: product.description || '',
             is_active: Boolean(product.is_active),
+            image: null, // 重置未修改的圖
         });
+        setPreviewUrl(product.image_url ? `/storage/${product.image_url}` : null); // 設定舊圖預覽
         setIsModalOpen(true);
     };
 
@@ -84,20 +100,15 @@ export default function ProductManagement({ products, categories, filters }) {
     const handleSubmit = (e) => {
         e.preventDefault();
         if (editingId) {
-            // 🌟 加入 onSuccess 回饋
-            put(route('admin.products.update', editingId), {
-                onSuccess: () => {
-                    closeModal();
-                    showToast('✅ 商品修改成功！');
-                }
+            // 🌟 完美解法：使用 post 加上 _method: 'put' 解決含有 File 的表單更新問題
+            router.post(route('admin.products.update', editingId), {
+                _method: 'put', ...data
+            }, {
+                onSuccess: () => { closeModal(); showToast('✅ 商品修改成功！'); }
             });
         } else {
-            // 🌟 加入 onSuccess 回饋
             post(route('admin.products.store'), {
-                onSuccess: () => {
-                    closeModal();
-                    showToast('✅ 新商品已成功上架！');
-                }
+                onSuccess: () => { closeModal(); showToast('✅ 新商品已成功上架！'); }
             });
         }
     };
@@ -241,6 +252,24 @@ export default function ProductManagement({ products, categories, filters }) {
                             <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 font-bold text-xl">✕</button>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-4">
+                            {/* 🌟 圖片預覽與上傳 */}
+                            <div className="flex gap-4 items-center">
+                                <div className="w-24 h-24 bg-gray-100 border rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                    {previewUrl ? (
+                                        <img src={previewUrl} alt="Preview" className="w-full h-full object-cover" />
+                                    ) : (
+                                        <span className="text-gray-400 text-xs">無圖片</span>
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">商品圖片</label>
+                                    <input
+                                        type="file" accept="image/*" onChange={handleImageChange}
+                                        className="w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-pink-50 file:text-pink-700 hover:file:bg-pink-100 transition"
+                                    />
+                                    {errors.image && <div className="text-red-500 text-xs mt-1">{errors.image}</div>}
+                                </div>
+                            </div>
                             {/* ... 原本的輸入框全部不變 ... */}
                             <div>
                                 <label className="block text-sm font-medium text-gray-700 mb-1">商品名稱 *</label>

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Product;
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 
 class AdminProductController extends Controller
@@ -38,10 +39,15 @@ class AdminProductController extends Controller
             'stock' => 'required|integer|min:0',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // 🌟 新增圖片驗證
         ]);
 
-        Product::create($validated);
+        if ($request->hasFile('image')) {
+            $path = $request->file('image')->store('products', 'public');
+            $validated['image_url'] = $path;
+        }
 
+        Product::create($validated);
         return back();
     }
 
@@ -54,10 +60,19 @@ class AdminProductController extends Controller
             'stock' => 'required|integer|min:0',
             'description' => 'nullable|string',
             'is_active' => 'boolean',
+            'image' => 'nullable|image|mimes:jpeg,png,jpg|max:2048', // 🌟 新增圖片驗證
         ]);
 
-        $product->update($validated);
+        // 🌟 處理新圖片上傳與舊圖片刪除
+        if ($request->hasFile('image')) {
+            if ($product->image_url) {
+                Storage::disk('public')->delete($product->image_url);
+            }
+            $path = $request->file('image')->store('products', 'public');
+            $validated['image_url'] = $path;
+        }
 
+        $product->update($validated);
         return back();
     }
 

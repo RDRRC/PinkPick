@@ -111,10 +111,17 @@ export default function ProductCard({ product }) {
             {/* 🌟 修改 1：將圖片區塊改為可點擊的 Link */}
             {/* 🌟 視覺優化：外層加上 overflow-hidden 與 group */}
             <Link href={route('products.show', product.id)} className="block h-48 bg-gray-200 overflow-hidden group">
-                {/* 🌟 內部加上 transform 與 hover:scale-105 動畫 */}
-                <div className="w-full h-full flex items-center justify-center text-gray-400 transition-transform duration-300 group-hover:scale-105 group-hover:bg-gray-300">
-                    Product Image
-                </div>
+                {product.image_url ? (
+                    <img
+                        src={`/storage/${product.image_url}`}
+                        alt={product.name}
+                        className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                ) : (
+                    <div className="w-full h-full flex items-center justify-center text-gray-400 transition-transform duration-300 group-hover:scale-105 group-hover:bg-gray-300">
+                        無商品圖片
+                    </div>
+                )}
             </Link>
 
             <div className="p-4 flex flex-col flex-grow">
