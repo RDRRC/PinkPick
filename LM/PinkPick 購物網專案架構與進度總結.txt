@@ -1,14 +1,14 @@
-### ============================================================
-### PinkPick 購物網專案架構與進度總結 (企業級協作版)
-### ============================================================
+##### ============================================================
+##### PinkPick 購物網專案架構與進度總結 (企業級協作版)
+##### ============================================================
 
 一、 專案基本資訊
 *  專案名稱：PinkPick Shopping Network (Demo)
 *  開發目標：展示全端開發能力，針對求職面試設計。
-*  更新日期：2026-04-14
-*  技術棧：Laravel 11.x + React + Inertia.js + Vite
+*  更新日期：2026-04-15
+*  技術棧：Laravel 11.x + React + Inertia.js + Vite + Tailwind CSS
 *  開發環境：Laragon (PHP 8.x, MySQL, Apache)
-*  資料庫現況：MySQL 已建立，包含商品、分類、屬性、購物車、訂單等核心資料表，具備完整關聯約束。
+*  資料庫現況：MySQL 已建立，包含商品、分類、屬性、購物車、訂單等核心資料表，並已擴充 image_url 欄位，具備完整關聯約束。
 
 --------------------------------------------------------------------------------
 
@@ -16,66 +16,67 @@
 1. 核心工作：自動生成 http://pinkpick.test 網域、管理 MySQL。
 2. 開發 SOP：
     *  啟動 Laragon (Start All)。
+    *  終端機執行 php artisan storage:link (確保圖片資源可讀取)。
     *  終端機執行 npm run dev (啟動 Vite 熱更新)。
     *  瀏覽器訪問商城首頁。
 
 --------------------------------------------------------------------------------
 
 三、 目前具備的核心功能與架構 (Current Features)
+
 1. 前端架構與 UI 呈現
-*  模組化設計：以 Shop.jsx 作為容器，抽離 Navbar, FilterSidebar, Pagination, ProductCard，提升代碼複用率。
-*  全域狀態管理：透過 React Context API (CartContext.jsx) 統一管理購物車邏輯，並放置於獨立的 Contexts 目錄下落實關注點分離。實現 Navbar 與購物車頁面之間 0 延遲同步。
-*  SPA 體驗：運用 Inertia.js 達成單頁導航無縫切換，並解決了前端反單引號解析問題，確保路由跳轉順暢執行。
-*  錯誤與防護：實作前端錯誤攔截 (errorMessage)，自動拆解 Validation 陣列，並建立保護層避免直接拋出 500 底層 SQL 錯誤。
-*  現代化 UX 設計：導入 Navbar 下拉選單設計以集中帳號操作；針對前端空白數據引入「Empty State Design (空狀態設計)」，提供友善的「去逛逛」按鈕引導。
-*  全站品牌視覺統一：將 Laravel Breeze 預設的 UI 徹底「PinkPick 化」，包含登入、註冊、個人資料頁面與共用按鈕 (PrimaryButton)，皆統一採用粉色系品牌主視覺與自訂 Navbar，消滅突兀的預設排版。
-*  高水準防呆 UX 設計：商品卡片 (ProductCard) 導入極簡設計，將數量調整與規格選擇統一收納至 Modal 中；並實作了「放寬即時輸入限制＋失去焦點雙重強制校正」的數量防呆機制，大幅提升操作順暢度。
+*  模組化設計：將狀態標籤抽離為共用元件 OrderStatusBadge.jsx，提升代碼複用率與維護性；實作兩欄式商品詳情頁 (ProductDetail.jsx) 提升視覺層次。
+*  防護級 UI 狀態回饋：實作具備企業級防護的 Toast 提示系統，運用 useRef 與 useEffect 的 Cleanup function 徹底消滅連續操作導致的計時器記憶體洩漏與 React 卸載報錯。
+*  現代化 UX 動效：全面導入 Tailwind group-hover 與 scale-105 實作高質感商品圖片微互動；加入防呆的空狀態 (Empty State) 視覺引導。
 
-2. 購物車與商品邏輯
-*  混合型購物車 (Hybrid Cart)：支援訪客透過 Session ID 將商品加入購物車。當訪客登入時，系統會自動比對並合併 Session 購物車與會員購物車的資料。
-*  規格選擇 (EAV 模式)：實作動態商品屬性與規格 (如顏色、尺寸)，使用者可針對特定規格加入購物車，資料庫以 selected_attributes 欄位儲存並透過 hash 進行防重複比對。
+2. 會員與權限防護系統 (Authorization & Security)
+*  企業級授權閘門 (Gate)：捨棄容易造成 Artisan 編譯錯誤的閉包中介層，改於 AppServiceProvider 中定義 Gate::define('admin')，並在 web.php 路由統一使用 can:admin 中介層實作雙重防護。
+*  前端入口隱藏：Navbar 採用條件渲染，非 admin@pinkpick.com 之使用者絕對無法看見或進入後台介面。
+
+3. 管理員後台系統 (Admin Panel - SPA CRUD)
+*  訂單狀態管理：透過 Inertia router.patch 實現無跳轉狀態更新 (待處理/已出貨/已完成)，並搭配滾動保留 (preserveScroll) 優化批次操作體驗。
+*  商品維護系統：採用 React Modal 實作一頁式 CRUD。結合 withQueryString() 完美保留搜尋關鍵字與分頁狀態；後端使用 with('category') 徹底解決 N+1 Query 效能瓶頸。
+*  圖片上傳處理 (File Upload)：前後端分離的標準解法。前端使用 e.target.files 與 URL.createObjectURL 實作圖片即時預覽；發送更新時採用 router.post 搭配 _method: 'put' 規避 PHP 限制；後端透過 Storage::disk('public') 自動處理新圖儲存與舊圖刪除。
+
+4. 購物車與商品邏輯
+*  規格選擇 (EAV 模式) 與嵌套預載入：在詳情頁使用 nested eager loading (attributes.attribute) 一次性拉取規格群組；結帳資料以 selected_attributes 欄位儲存並透過 hash 進行防重複比對。
+*  連續購物 UX：商品詳情頁加入購物車後保留已選規格，免去使用者重複點擊的困擾；並將 Navbar 購物車數字實現即時跳動同步。
 *  計價權威後端化：所有金額計算均在後端重新撈取 DB 原始定價，徹底阻斷前端修改 Payload 竄改價格的攻擊路徑。
-*  Service Pattern 架構封裝：為落實 DRY 原則與交易防護，將訪客購物車無縫合併的邏輯抽離至獨立的 CartService。結合悲觀鎖 (lockForUpdate) 與 DB::transaction，並透過依賴注入完美整合於「登入 (AuthenticatedSessionController)」與「註冊 (RegisteredUserController)」流程中。
+*  Service Pattern 架構封裝：將訪客購物車無縫合併的邏輯抽離至獨立的 CartService。結合悲觀鎖 (lockForUpdate) 與 DB::transaction，完美整合於登入與註冊流程中。
 
-3. 結帳與訂單處理
-*  結帳流程：強制會員登入驗證。建立完整的結帳表單 (Checkout.jsx) 與成功跳轉頁面 (OrderSuccess.jsx)。
+5. 結帳與訂單處理
 *  原子性交易防護 (Atomic Transactions)：運用 DB::transaction 確保訂單建立、明細快照寫入與購物車清理三者處於同一個原子操作中，消滅資料不一致風險。
-*  單價快照 (Price Snapshot)：在結帳時，將商品當下售價與規格固定存入 order_items 表，確保歷史訂單紀錄不受未來商品價格波動影響。
-*  會員訂單查詢：導入專屬的 /member/orders 獨立路由。精準設定 Model 關聯 (Order -> OrderItem -> Product) 以解決深層資料取得 (Eager Loading)，並在前端完美呈現歷史購買紀錄。
-*  閉環資料流 (Data Loop) 與無感儲存：擴充 users 資料表加入 phone 與 address。在結帳流程中實作無感回寫機制，自動將新會員填寫的聯絡資訊存為預設值；並完整串接至「個人資料設定」頁面，將資料的「讀取、寫入、修改」完美閉環。
-*  完整的訂單查詢閉環：建立專屬的訂單詳情頁面 (OrderDetail.jsx)，結合 Ziggy 動態命名路由 (route())，精準渲染結帳當下的商品規格快照與完整收件人資訊。
+*  單價快照 (Price Snapshot)：結帳時將商品當下售價與規格固定存入 order_items，確保歷史紀錄不受未來商品價格波動影響。
+*  閉環資料流 (Data Loop) 與無感儲存：擴充 users 資料表加入 phone 與 address。結帳流程自動將新會員聯絡資訊存為預設值，並串接至「個人資料設定」頁面完美閉環。
 
 --------------------------------------------------------------------------------
 
-四、 開發工具、協作模式與環境調校
-*  AI 合約式協作 (Contract-based Development)：引入「事前資源相容性驗證」策略。透過「架構生成端」與「全文檢索端」雙重 AI 工具互相核對資源庫，大幅降低修改遺漏與資料表欄位衝突的風險。
-*  建立專屬通道：開發 clean_for_lm.php 腳本，將 Laravel 與 React 專案檔案標準化輸出為純文字。利用 HTML 實體編碼迴避 Markdown 解析器對特殊符號 (`, $) 的誤判。
-*  編譯器最佳化：移除已棄用的 jsconfig.json baseUrl 配置，改採現代化的 @/* alias 映射，消除 TypeScript/Vite 路徑解析警告。
+四、 開發工具與環境調校
+*  AI 合約式協作：透過 clean_for_lm.php 腳本輸出純文字供 AI 全文檢索，精準核對資源庫。
+*  生命週期精準掌控：從解決 FileList 解析報錯，到處理 Closure 中介層導致的 Artisan 異常，全面對齊 Laravel 11 與 React 18 的業界開發規範。
 
 --------------------------------------------------------------------------------
 
 五、 開發日誌與時序紀錄 (Changelog)
 
-*  [2026-04-14] 買家端購物閉環與服務層重構完成：
-    1. 會員體驗優化：完成登入/註冊頁面中文化與品牌色統一，並將原先 Breeze 預設的 Profile 頁面替換為 PinkPick 商城一致的排版風格。
-    2. 引入 CartService：重構購物車合併邏輯，解決新會員註冊後購物車遺失的 Edge Case，並確保高併發下的資料庫一致性。
-    3. 結帳 UX 大幅提升：實作 ProductCard 雙重防呆數量選擇器；並於結帳控制器 (OrderController@store) 實作無感儲存會員預設電話與地址的功能，解決 IDE 介面型別提示 (PHPDoc) 問題。
-    4. 訂單詳情實作：完成 /member/orders/{order_number} 路由與前端頁面，徹底完善買家端的歷史訂單查詢體驗。
-*  [2026-04-13] 會員系統建置與 UX 優化：
-    1. 實作 Navbar 下拉選單。
-    2. 建立 Member/Orders.jsx 與空狀態邏輯。
-    3. 修正 Checkout.jsx 中 shipping_address 狀態綁定導致的 SQL null constraint 錯誤。
-    4. 補齊 OrderItem 模型中的 product() 關聯。
-    5. 更新 jsconfig.json 消除路徑棄用警告。
-*  [2026-04-10] 工具鏈優化與結帳流程驗證：升級 clean_for_lm.php 解決解析衝突；確認 Checkout.jsx 跳轉流程閉環。釐清 Contexts 目錄架構意義。
-*  [2026-04-02] 核心商務邏輯與交易系統完工：實作 OrderController 原子事務處理與單價快照。
+*  [2026-04-15] 後台管理、商品詳情與圖片上傳系統完工：
+    1. 路由安全重構：使用 AppServiceProvider Gate 替換閉包中介層，徹底解決 php artisan migrate 報錯問題。
+    2. 後台商品 CRUD 實作：完成帶有搜尋、分頁、預覽圖、與防彈級 Toast 提示的 Modal 單頁管理系統。
+    3. 圖片上傳系統：完成 image_url 資料表擴充、Storage::link 捷徑設定，並完美解決 Inertia PUT 請求無法上傳 multipart/form-data 的底層限制。
+    4. 獨立商品詳情頁：完成 /products/{id} 路由，實作兩欄式 UI、嵌套預載入 (Nested Eager Loading) 解決規格屬性 N+1 問題，並優化連續加入購物車的 UX 動線。
+*  [2026-04-14] 買家端購物閉環與服務層重構完成 (CartService, 歷史訂單詳情)。
+*  [2026-04-13] 會員系統建置、Navbar 下拉選單與 UX 優化。
+*  [2026-04-10] 工具鏈優化與結帳流程驗證。
+*  [2026-04-02] 核心商務邏輯、OrderController 原子事務處理與悲觀鎖 (Pessimistic Locking) 完工。
 *  [2026-03-31] 前端錯誤攔截與 UI 呈現完工。
 *  [2026-03-19] EAV 商品規格資料庫設計完成。
 *  [2026-02-05] 專案基礎骨架建立。
 
 --------------------------------------------------------------------------------
 
-六、 下一步計畫 (Next Steps)
-*  [ ] 模組：管理員後台系統 (Admin Panel)
-*  [ ] 任務：實作「後台訂單狀態變更機制」，允許管理員模擬出貨/付款，將訂單狀態從 `pending` 更新為 `paid` 或 `completed`。
-*  [ ] 任務：實作獨立的「商品詳情頁 (Product Detail Page)」，提供更豐富的圖文介紹與評價顯示區塊。
+六、 下一步計畫 (Next Steps - 未來擴充藍圖)
+*  [已完成] 模組：管理員後台系統 (Admin Panel) - 訂單狀態與商品 CRUD 管理。
+*  [已完成] 任務：實作獨立的「商品詳情頁 (Product Detail Page)」，提供圖片與規格動態選擇。
+*  [未來擴充] 任務：將網址列參數從 /products/{id} 重構為 SEO 友善的 /products/{slug}。
+*  [未來擴充] 任務：串接真實第三方金流服務 (如綠界科技 ECPay 或 Stripe) 處理付款。
+*  [未來擴充] 部署：將專案完整打包並部署至線上伺服器 (如 Heroku、Render 或 AWS)。
