@@ -18,7 +18,7 @@ RUN a2enmod rewrite
 
 # 設定 Apache 的 Document Root
 ENV APACHE_DOCUMENT_ROOT /var/www/html/public
-RUN Render sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
 RUN sed -ri -e 's!/var/www/!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/apache2.conf /etc/apache2/conf-available/*.conf
 
 # 把專案程式碼放進去
