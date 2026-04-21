@@ -4,8 +4,9 @@ namespace App\Providers;
 
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Gate; // 🌟 記得引入 Gate
-use App\Models\User; // 🌟 記得引入 User 模型
+use Illuminate\Support\Facades\Gate;
+use App\Models\User;
+use Illuminate\Support\Facades\URL; // 👉 1. 記得加上這行引入 URL 工具
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -22,10 +23,14 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // 原本加速前端資源載入的設定 (保留)
+        // 👉 2. 加上這段：如果是在正式環境 (Production)，強制所有連結變成 https
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
+
+        // 👇 3. 以下是專案原本的核心邏輯，絕對不能刪除！[1]
         Vite::prefetch(concurrency: 3);
 
-        // 🌟 新增：定義超級管理員的權限閘門
         Gate::define('admin', function (User $user) {
             return $user->email === 'admin@pinkpick.com';
         });

@@ -1,10 +1,11 @@
-檔案路徑：app\Providers\AppServiceProvider.php
+檔案路徑：app/Providers/AppServiceProvider.php
 
 namespace App\Providers;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Gate; 
-use App\Models\User; 
+use Illuminate\Support\Facades\Gate;
+use App\Models\User;
+use Illuminate\Support\Facades\URL; 
 class AppServiceProvider extends ServiceProvider
 {
     public function register(): void
@@ -12,6 +13,9 @@ class AppServiceProvider extends ServiceProvider
     }
     public function boot(): void
     {
+        if (config('app.env') === 'production') {
+            URL::forceScheme('https');
+        }
         Vite::prefetch(concurrency: 3);
         Gate::define('admin', function (User $user) {
             return $user->email === 'admin@pinkpick.com';
