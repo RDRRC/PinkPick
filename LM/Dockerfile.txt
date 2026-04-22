@@ -25,12 +25,15 @@ COPY . .
 # 安裝 Composer 並執行
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 RUN composer install --no-dev --optimize-autoloader
-# 執行 NPM 安裝與打包前端 (這能解決 Vite 找不到檔案的問題)
+# 執行 NPM 安裝與打包前端
 RUN npm install
 RUN npm run build
-# 👇 補上這一行：建立圖片捷徑
+# 建立圖片捷徑
 RUN php artisan storage:link
 # 設定資料夾權限
 RUN chown -R www-data:www-data storage bootstrap/cache
 # 暴露 80 埠
 EXPOSE 80
+# 👇 🌟 核心修正：覆寫啟動指令 (CMD)
+# 邏輯：容器啟動時，先強制跑 Migration，跑完之後再正式啟動 Apache 伺服器 (apache2-foreground)
+CMD ["sh", "-c", "php artisan migrate --force && apache2-foreground"]
