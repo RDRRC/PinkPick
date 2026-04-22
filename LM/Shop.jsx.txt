@@ -1,4 +1,4 @@
-檔案路徑：resources\js\Pages\Shop.jsx
+檔案路徑：resources/js/Pages/Shop.jsx
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
@@ -8,6 +8,7 @@ import Pagination from '../Components/Pagination';
 import FilterSidebar from '../Components/FilterSidebar';
 import ProductCard from '../Components/ProductCard';
 export default function Shop() {
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -81,10 +82,21 @@ export default function Shop() {
         &lt;div className="min-h-screen bg-gray-100"&gt;
             &lt;Head title="PinkPick 商城" /&gt;
             &lt;Navbar /&gt;
-            &lt;div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10"&gt;
+            &lt;div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10 mt-6"&gt;
+                &lt;div className="md:hidden"&gt;
+                    &lt;button
+                        onClick={() =&gt; setIsMobileFilterOpen(true)}
+                        className="w-full bg-white text-gray-700 py-3 rounded-lg shadow-sm font-bold flex items-center justify-center gap-2 border border-gray-200"
+                    &gt;
+                        &lt;svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"&gt;&lt;path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"&gt;&lt;/path&gt;&lt;/svg&gt;
+                        商品篩選
+                    &lt;/button&gt;
+                &lt;/div&gt;
                 &lt;FilterSidebar
                     filters={filters}
                     onFilterChange={handleFilterChange}
+                    isMobileOpen={isMobileFilterOpen}
+                    onClose={() =&gt; setIsMobileFilterOpen(false)}
                 /&gt;
                 &lt;main className="w-full md:w-3/4"&gt;
                     {errorMessage && (

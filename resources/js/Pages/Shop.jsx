@@ -8,6 +8,7 @@ import ProductCard from '../Components/ProductCard';
 
 export default function Shop() {
     // 1. 原本的狀態保留
+    const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [page, setPage] = useState(1);
@@ -105,15 +106,28 @@ export default function Shop() {
 
     return (
         <div className="min-h-screen bg-gray-100">
-            {/* 這裡順手幫您更新為 PinkPick */}
             <Head title="PinkPick 商城" />
-
             <Navbar />
 
-            <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10">
+            <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10 mt-6">
+
+                {/* 🌟 1. 手機版專屬按鈕：點擊開啟篩選抽屜 (加上 md:hidden) */}
+                <div className="md:hidden">
+                    <button
+                        onClick={() => setIsMobileFilterOpen(true)}
+                        className="w-full bg-white text-gray-700 py-3 rounded-lg shadow-sm font-bold flex items-center justify-center gap-2 border border-gray-200"
+                    >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"></path></svg>
+                        商品篩選
+                    </button>
+                </div>
+
+                {/* 🌟 2. 傳入狀態給篩選器 */}
                 <FilterSidebar
                     filters={filters}
                     onFilterChange={handleFilterChange}
+                    isMobileOpen={isMobileFilterOpen}
+                    onClose={() => setIsMobileFilterOpen(false)}
                 />
 
                 <main className="w-full md:w-3/4">
