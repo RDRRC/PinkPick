@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// resources/js/Pages/Shop.jsx
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Head } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
@@ -7,7 +8,6 @@ import FilterSidebar from '../Components/FilterSidebar';
 import ProductCard from '../Components/ProductCard';
 
 export default function Shop() {
-    // 1. 原本的狀態保留
     const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
     const [products, setProducts] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -20,81 +20,79 @@ export default function Shop() {
         price_max: '',
         sort: 'newest'
     });
-
-    // 2. 【新增】用來儲存錯誤訊息的狀態
     const [errorMessage, setErrorMessage] = useState(null);
 
-    const fetchProducts = async () => {
+    // 🌟 優化 2：將 fetchProducts 使用 useCallback 包裝，並加入 signal 參數處理中斷
+    const fetchProducts = useCallback(async (signal) => {
         setLoading(true);
-        setErrorMessage(null); // 【新增】發送請求前，先清空舊的錯誤訊息
+        setErrorMessage(null);
 
         try {
-            // 原本正確的 API 呼叫與參數傳遞
             const response = await axios.get('/api/products', {
-                params: { ...filters, page: page }
+                params: { ...filters, page: page },
+                signal: signal // 綁定中止訊號
             });
-            // 原本正確的資料解析路徑 (搭配 Controller 的 sendResponse payload)
+
             setProducts(response.data.payload.data);
             setLastPage(response.data.payload.last_page);
 
         } catch (error) {
-            const response = error.response;
-
-            // 如果沒有 response，通常代表網路斷線或 CORS 錯誤
-            if (!response) {
-                setErrorMessage("網路連線異常，請檢查您的網路狀態。");
-                console.error("無法取得商品 (Network/CORS):", error);
+            // 🌟 核心防護：如果是因為防抖或重新發送而被取消的請求，不視為錯誤
+            if (axios.isCancel(error)) {
                 return;
             }
 
-            const responseData = response.data;
-            const statusCode = response.status;
+            const response = error.response;
 
-            // 處理 500 系列的伺服器嚴重錯誤 (後端崩潰)
-            if (statusCode >= 500) {
+            if (!response) {
+                setErrorMessage("網路連線異常，請檢查您的網路狀態。");
+                return;
+            }
+
+            const { data, status } = response;
+
+            if (status >= 500) {
                 setErrorMessage("伺服器發生異常，我們正在緊急處理中，請稍後再試。");
                 return;
             }
 
-            // 處理 400 系列的業務邏輯或驗證錯誤
-            if (responseData && responseData.message) {
-                // 防護：檢查 message 是否為陣列/物件 (例如 Laravel Validation Error)
-                if (typeof responseData.message === 'object') {
-                    // 攤平所有錯誤陣列，並確實取出「第一句」字串來顯示
-                    const firstErrorString = Object.values(responseData.message).flat()[0];
-                    setErrorMessage(firstErrorString || "資料驗證失敗，請檢查輸入內容。");
-                }
-                // 防護：如果是單純的字串錯誤 (例如你自訂的 "無此商品")
-                else if (typeof responseData.message === 'string') {
-                    setErrorMessage(responseData.message);
-                }
+            // 🌟 優化 3：精準捕捉 Laravel 標準的 Validation Errors 結構
+            if (status === 422 && data.errors) {
+                const firstErrorString = Object.values(data.errors).flat()[0];
+                setErrorMessage(firstErrorString || "資料驗證失敗，請檢查輸入內容。");
+            } else if (data && data.message) {
+                setErrorMessage(typeof data.message === 'string' ? data.message : "發生未知錯誤。");
             } else {
-                // Fallback: 有 response 但沒有預期的 message 結構
                 setErrorMessage("無法取得商品，發生未知錯誤。");
             }
-
-            console.error("無法取得商品:", error);
         } finally {
-            setLoading(false);
+            // 確保不是被取消的請求才解除 loading 狀態
+            if (!signal.aborted) {
+                setLoading(false);
+            }
         }
-    };
+    }, [filters, page]); // 依賴項更新時，重新生成此函數
 
-    // 狀態變更時重置為第一頁
+    // 🌟 優化 1：整合 Debounce 與 API 請求中止 (AbortController)
     useEffect(() => {
-        setPage(1);
-    }, [filters]);
+        const controller = new AbortController();
 
-    // 原本的 Debounce 防抖機制
-    useEffect(() => {
-        const debounce = setTimeout(() => {
-            fetchProducts();
+        const debounceTimer = setTimeout(() => {
+            fetchProducts(controller.signal);
         }, 300);
-        return () => clearTimeout(debounce);
-    }, [page, filters]);
+
+        // Cleanup Function：當 page 或 filters 改變，或是元件卸載時，清除 timer 並中止未完成的 API
+        return () => {
+            clearTimeout(debounceTimer);
+            controller.abort();
+        };
+    }, [fetchProducts]);
 
     const handleFilterChange = (e) => {
         const { name, value } = e.target;
         setFilters(prev => ({ ...prev, [name]: value }));
+        // 🌟 優化 1：直接在事件觸發時重置頁碼，移除多餘的 useEffect，避免連鎖渲染
+        setPage(1);
     };
 
     const handlePageChange = (newPage) => {
@@ -109,10 +107,9 @@ export default function Shop() {
             <Head title="PinkPick 商城" />
             <Navbar />
 
-            <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10 mt-6">
-
-                {/* 🌟 1. 手機版專屬按鈕：點擊開啟篩選抽屜 (加上 md:hidden) */}
-                <div className="md:hidden">
+            <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-start gap-6 pb-10 mt-6">
+                {/* 手機版篩選按鈕 */}
+                <div className="md:hidden w-full">
                     <button
                         onClick={() => setIsMobileFilterOpen(true)}
                         className="w-full bg-white text-gray-700 py-3 rounded-lg shadow-sm font-bold flex items-center justify-center gap-2 border border-gray-200"
@@ -122,7 +119,6 @@ export default function Shop() {
                     </button>
                 </div>
 
-                {/* 🌟 2. 傳入狀態給篩選器 */}
                 <FilterSidebar
                     filters={filters}
                     onFilterChange={handleFilterChange}
@@ -131,28 +127,18 @@ export default function Shop() {
                 />
 
                 <main className="w-full md:w-3/4">
-                    {/* 【新增】錯誤提示橫幅 (Banner) 放在商品區塊最上方 */}
                     {errorMessage && (
-                        <div
-                            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 flex justify-between items-center shadow-sm"
-                            role="alert"
-                        >
+                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 flex justify-between items-center shadow-sm" role="alert">
                             <div className="flex items-center">
                                 <svg className="w-5 h-5 mr-2 fill-current" viewBox="0 0 20 20">
                                     <path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" fillRule="evenodd"></path>
                                 </svg>
                                 <span className="block sm:inline">{errorMessage}</span>
                             </div>
-                            <button
-                                onClick={() => setErrorMessage(null)}
-                                className="text-red-700 hover:text-red-900 font-bold focus:outline-none"
-                            >
-                                ✕
-                            </button>
+                            <button onClick={() => setErrorMessage(null)} className="text-red-700 hover:text-red-900 font-bold focus:outline-none">✕</button>
                         </div>
                     )}
 
-                    {/* 以下完全保留您原本的商品渲染與分頁邏輯 */}
                     {loading ? (
                         <div className="text-center py-20 text-gray-500">載入中...</div>
                     ) : (
@@ -163,7 +149,7 @@ export default function Shop() {
                                         <ProductCard key={product.id} product={product} />
                                     ))
                                 ) : (
-                                    <div className="col-span-3 text-center py-10 text-gray-500 bg-white rounded-lg">
+                                    <div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-10 text-gray-500 bg-white rounded-lg shadow-sm border border-gray-100">
                                         沒有找到符合條件的商品
                                     </div>
                                 )}

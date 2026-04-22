@@ -1,6 +1,6 @@
 檔案路徑：resources/js/Pages/Shop.jsx
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { Head } from '@inertiajs/react';
 import Navbar from '../Components/Navbar';
@@ -21,56 +21,58 @@ export default function Shop() {
         sort: 'newest'
     });
     const [errorMessage, setErrorMessage] = useState(null);
-    const fetchProducts = async () =&gt; {
+    const fetchProducts = useCallback(async (signal) =&gt; {
         setLoading(true);
-        setErrorMessage(null); 
+        setErrorMessage(null);
         try {
             const response = await axios.get('/api/products', {
-                params: { ...filters, page: page }
+                params: { ...filters, page: page },
+                signal: signal 
             });
             setProducts(response.data.payload.data);
             setLastPage(response.data.payload.last_page);
         } catch (error) {
+            if (axios.isCancel(error)) {
+                return;
+            }
             const response = error.response;
             if (!response) {
                 setErrorMessage("網路連線異常，請檢查您的網路狀態。");
-                console.error("無法取得商品 (Network/CORS):", error);
                 return;
             }
-            const responseData = response.data;
-            const statusCode = response.status;
-            if (statusCode &gt;= 500) {
+            const { data, status } = response;
+            if (status &gt;= 500) {
                 setErrorMessage("伺服器發生異常，我們正在緊急處理中，請稍後再試。");
                 return;
             }
-            if (responseData && responseData.message) {
-                if (typeof responseData.message === 'object') {
-                    const firstErrorString = Object.values(responseData.message).flat()[0];
-                    setErrorMessage(firstErrorString || "資料驗證失敗，請檢查輸入內容。");
-                }
-                else if (typeof responseData.message === 'string') {
-                    setErrorMessage(responseData.message);
-                }
+            if (status === 422 && data.errors) {
+                const firstErrorString = Object.values(data.errors).flat()[0];
+                setErrorMessage(firstErrorString || "資料驗證失敗，請檢查輸入內容。");
+            } else if (data && data.message) {
+                setErrorMessage(typeof data.message === 'string' ? data.message : "發生未知錯誤。");
             } else {
                 setErrorMessage("無法取得商品，發生未知錯誤。");
             }
-            console.error("無法取得商品:", error);
         } finally {
-            setLoading(false);
+            if (!signal.aborted) {
+                setLoading(false);
+            }
         }
-    };
+    }, [filters, page]); 
     useEffect(() =&gt; {
-        setPage(1);
-    }, [filters]);
-    useEffect(() =&gt; {
-        const debounce = setTimeout(() =&gt; {
-            fetchProducts();
+        const controller = new AbortController();
+        const debounceTimer = setTimeout(() =&gt; {
+            fetchProducts(controller.signal);
         }, 300);
-        return () =&gt; clearTimeout(debounce);
-    }, [page, filters]);
+        return () =&gt; {
+            clearTimeout(debounceTimer);
+            controller.abort();
+        };
+    }, [fetchProducts]);
     const handleFilterChange = (e) =&gt; {
         const { name, value } = e.target;
         setFilters(prev =&gt; ({ ...prev, [name]: value }));
+        setPage(1);
     };
     const handlePageChange = (newPage) =&gt; {
         if (newPage &gt;= 1 && newPage &lt;= lastPage) {
@@ -82,8 +84,8 @@ export default function Shop() {
         &lt;div className="min-h-screen bg-gray-100"&gt;
             &lt;Head title="PinkPick 商城" /&gt;
             &lt;Navbar /&gt;
-            &lt;div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row gap-6 pb-10 mt-6"&gt;
-                &lt;div className="md:hidden"&gt;
+            &lt;div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-start gap-6 pb-10 mt-6"&gt;
+                &lt;div className="md:hidden w-full"&gt;
                     &lt;button
                         onClick={() =&gt; setIsMobileFilterOpen(true)}
                         className="w-full bg-white text-gray-700 py-3 rounded-lg shadow-sm font-bold flex items-center justify-center gap-2 border border-gray-200"
@@ -100,22 +102,14 @@ export default function Shop() {
                 /&gt;
                 &lt;main className="w-full md:w-3/4"&gt;
                     {errorMessage && (
-                        &lt;div
-                            className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 flex justify-between items-center shadow-sm"
-                            role="alert"
-                        &gt;
+                        &lt;div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative mb-6 flex justify-between items-center shadow-sm" role="alert"&gt;
                             &lt;div className="flex items-center"&gt;
                                 &lt;svg className="w-5 h-5 mr-2 fill-current" viewBox="0 0 20 20"&gt;
                                     &lt;path d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" fillRule="evenodd"&gt;&lt;/path&gt;
                                 &lt;/svg&gt;
                                 &lt;span className="block sm:inline"&gt;{errorMessage}&lt;/span&gt;
                             &lt;/div&gt;
-                            &lt;button
-                                onClick={() =&gt; setErrorMessage(null)}
-                                className="text-red-700 hover:text-red-900 font-bold focus:outline-none"
-                            &gt;
-                                ✕
-                            &lt;/button&gt;
+                            &lt;button onClick={() =&gt; setErrorMessage(null)} className="text-red-700 hover:text-red-900 font-bold focus:outline-none"&gt;✕&lt;/button&gt;
                         &lt;/div&gt;
                     )}
                     {loading ? (
@@ -128,7 +122,7 @@ export default function Shop() {
                                         &lt;ProductCard key={product.id} product={product} /&gt;
                                     ))
                                 ) : (
-                                    &lt;div className="col-span-3 text-center py-10 text-gray-500 bg-white rounded-lg"&gt;
+                                    &lt;div className="col-span-1 sm:col-span-2 lg:col-span-3 text-center py-10 text-gray-500 bg-white rounded-lg shadow-sm border border-gray-100"&gt;
                                         沒有找到符合條件的商品
                                     &lt;/div&gt;
                                 )}

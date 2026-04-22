@@ -9,6 +9,7 @@ export default function Navbar() {
     const [isDropdownOpen, setIsDropdownOpen] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
     const dropdownRef = useRef(null);
+    const isAdmin = auth?.user?.is_admin || auth?.user?.email === 'admin@pinkpick.com';
     useEffect(() =&gt; {
         const handleClickOutside = (event) =&gt; {
             if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
@@ -20,8 +21,9 @@ export default function Navbar() {
             document.removeEventListener('mousedown', handleClickOutside);
         };
     }, []);
+    const closeMobileMenu = () =&gt; setIsMobileMenuOpen(false);
     return (
-        &lt;nav className="bg-white shadow-sm border-b border-gray-100"&gt;
+        &lt;nav className="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50"&gt;
             &lt;div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"&gt;
                 &lt;div className="flex justify-between h-16"&gt;
                     &lt;div className="flex items-center"&gt;
@@ -30,10 +32,7 @@ export default function Navbar() {
                         &lt;/Link&gt;
                     &lt;/div&gt;
                     &lt;div className="hidden md:flex items-center space-x-6"&gt;
-                        &lt;Link
-                            href="/cart"
-                            className="relative text-gray-600 hover:text-pink-600 transition flex items-center p-2"
-                        &gt;
+                        &lt;Link href="/cart" className="relative text-gray-600 hover:text-pink-600 transition flex items-center p-2" aria-label="購物車"&gt;
                             &lt;svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"&gt;
                                 &lt;path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"&gt;&lt;/path&gt;
                             &lt;/svg&gt;
@@ -48,6 +47,8 @@ export default function Navbar() {
                                 &lt;button
                                     onClick={() =&gt; setIsDropdownOpen(!isDropdownOpen)}
                                     className="flex items-center gap-2 text-gray-700 hover:text-pink-600 transition focus:outline-none"
+                                    aria-expanded={isDropdownOpen}
+                                    aria-haspopup="true"
                                 &gt;
                                     &lt;span className="font-medium"&gt;Hi, {auth.user.name}&lt;/span&gt;
                                     &lt;svg className={&#96;w-4 h-4 transition-transform duration-200 ${isDropdownOpen ? 'rotate-180' : ''}&#96;} fill="none" stroke="currentColor" viewBox="0 0 24 24"&gt;
@@ -56,66 +57,40 @@ export default function Navbar() {
                                 &lt;/button&gt;
                                 {isDropdownOpen && (
                                     &lt;div className="absolute right-0 mt-2 w-48 bg-white border border-gray-100 rounded-md shadow-lg py-1 z-50"&gt;
-                                        {auth?.user?.email === 'admin@pinkpick.com' && (
+                                        {isAdmin && (
                                             &lt;&gt;
-                                                &lt;Link
-                                                    href={route('admin.orders.index')}
-                                                    className="block px-4 py-2 text-sm text-pink-600 font-bold hover:bg-pink-50"
-                                                    onClick={() =&gt; setIsDropdownOpen(false)}
-                                                &gt;
+                                                &lt;Link href={route('admin.orders.index')} className="block px-4 py-2 text-sm text-pink-600 font-bold hover:bg-pink-50" onClick={() =&gt; setIsDropdownOpen(false)}&gt;
                                                     後台訂單管理
                                                 &lt;/Link&gt;
-                                                &lt;Link
-                                                    href={route('admin.products.index')}
-                                                    className="block px-4 py-2 text-sm text-pink-600 font-bold hover:bg-pink-50"
-                                                    onClick={() =&gt; setIsDropdownOpen(false)}
-                                                &gt;
+                                                &lt;Link href={route('admin.products.index')} className="block px-4 py-2 text-sm text-pink-600 font-bold hover:bg-pink-50" onClick={() =&gt; setIsDropdownOpen(false)}&gt;
                                                     後台商品管理
                                                 &lt;/Link&gt;
                                                 &lt;div className="border-t border-gray-100 my-1"&gt;&lt;/div&gt;
                                             &lt;/&gt;
                                         )}
-                                        &lt;Link
-                                            href={route('profile.edit')}
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700"
-                                            onClick={() =&gt; setIsDropdownOpen(false)}
-                                        &gt;
+                                        &lt;Link href={route('profile.edit')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700" onClick={() =&gt; setIsDropdownOpen(false)}&gt;
                                             個人資料設定
                                         &lt;/Link&gt;
                                         &lt;div className="border-t border-gray-100 my-1"&gt;&lt;/div&gt;
-                                        &lt;Link
-                                            href="/member/orders"
-                                            className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700"
-                                            onClick={() =&gt; setIsDropdownOpen(false)}
-                                        &gt;
+                                        &lt;Link href="/member/orders" className="block px-4 py-2 text-sm text-gray-700 hover:bg-pink-50 hover:text-pink-700" onClick={() =&gt; setIsDropdownOpen(false)}&gt;
                                             我的訂單
                                         &lt;/Link&gt;
                                         &lt;div className="border-t border-gray-100 my-1"&gt;&lt;/div&gt;
-                                        &lt;Link
-                                            href="/logout"
-                                            method="post"
-                                            as="button"
-                                            className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700"
-                                        &gt;
+                                        &lt;Link href="/logout" method="post" as="button" className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-red-50 hover:text-red-700"&gt;
                                             登出
                                         &lt;/Link&gt;
-                                        &lt;div className="border-t border-gray-100 my-1"&gt;&lt;/div&gt;
                                     &lt;/div&gt;
                                 )}
                             &lt;/div&gt;
                         ) : (
                             &lt;div className="flex items-center space-x-4"&gt;
-                                &lt;Link href="/login" className="text-sm font-medium text-gray-600 hover:text-pink-600 transition"&gt;
-                                    登入
-                                &lt;/Link&gt;
-                                &lt;Link href="/register" className="text-sm font-medium bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 transition"&gt;
-                                    註冊
-                                &lt;/Link&gt;
+                                &lt;Link href="/login" className="text-sm font-medium text-gray-600 hover:text-pink-600 transition"&gt;登入&lt;/Link&gt;
+                                &lt;Link href="/register" className="text-sm font-medium bg-pink-600 text-white px-4 py-2 rounded-md hover:bg-pink-700 transition"&gt;註冊&lt;/Link&gt;
                             &lt;/div&gt;
                         )}
                     &lt;/div&gt;
                     &lt;div className="flex items-center md:hidden space-x-4"&gt;
-                        &lt;Link href="/cart" className="relative text-gray-600 p-2"&gt;
+                        &lt;Link href="/cart" className="relative text-gray-600 p-2" aria-label="購物車"&gt;
                             &lt;svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"&gt;&lt;path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"&gt;&lt;/path&gt;&lt;/svg&gt;
                             {cartCount &gt; 0 && (
                                 &lt;span className="absolute top-0 right-0 inline-flex items-center justify-center px-2 py-1 text-xs font-bold leading-none text-white transform translate-x-1/4 -translate-y-1/4 bg-pink-600 rounded-full"&gt;
@@ -123,7 +98,12 @@ export default function Navbar() {
                                 &lt;/span&gt;
                             )}
                         &lt;/Link&gt;
-                        &lt;button onClick={() =&gt; setIsMobileMenuOpen(!isMobileMenuOpen)} className="text-gray-600 focus:outline-none"&gt;
+                        &lt;button
+                            onClick={() =&gt; setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="text-gray-600 focus:outline-none"
+                            aria-expanded={isMobileMenuOpen}
+                            aria-label="開啟選單"
+                        &gt;
                             &lt;svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"&gt;
                                 {isMobileMenuOpen ? (
                                     &lt;path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" /&gt;
@@ -141,20 +121,20 @@ export default function Navbar() {
                         {auth?.user ? (
                             &lt;&gt;
                                 &lt;div className="px-3 py-2 text-sm font-bold text-gray-800 border-b border-gray-100 mb-2"&gt;Hi, {auth.user.name}&lt;/div&gt;
-                                {auth?.user?.email === 'admin@pinkpick.com' && (
+                                {isAdmin && (
                                     &lt;&gt;
-                                        &lt;Link href={route('admin.orders.index')} className="block px-3 py-2 text-pink-600 font-bold"&gt;後台訂單管理&lt;/Link&gt;
-                                        &lt;Link href={route('admin.products.index')} className="block px-3 py-2 text-pink-600 font-bold"&gt;後台商品管理&lt;/Link&gt;
+                                        &lt;Link href={route('admin.orders.index')} onClick={closeMobileMenu} className="block px-3 py-2 text-pink-600 font-bold"&gt;後台訂單管理&lt;/Link&gt;
+                                        &lt;Link href={route('admin.products.index')} onClick={closeMobileMenu} className="block px-3 py-2 text-pink-600 font-bold"&gt;後台商品管理&lt;/Link&gt;
                                     &lt;/&gt;
                                 )}
-                                &lt;Link href={route('profile.edit')} className="block px-3 py-2 text-gray-700"&gt;個人資料設定&lt;/Link&gt;
-                                &lt;Link href="/member/orders" className="block px-3 py-2 text-gray-700"&gt;我的訂單&lt;/Link&gt;
-                                &lt;Link href="/logout" method="post" as="button" className="block w-full text-left px-3 py-2 text-red-600"&gt;登出&lt;/Link&gt;
+                                &lt;Link href={route('profile.edit')} onClick={closeMobileMenu} className="block px-3 py-2 text-gray-700"&gt;個人資料設定&lt;/Link&gt;
+                                &lt;Link href="/member/orders" onClick={closeMobileMenu} className="block px-3 py-2 text-gray-700"&gt;我的訂單&lt;/Link&gt;
+                                &lt;Link href="/logout" method="post" as="button" onClick={closeMobileMenu} className="block w-full text-left px-3 py-2 text-red-600"&gt;登出&lt;/Link&gt;
                             &lt;/&gt;
                         ) : (
                             &lt;&gt;
-                                &lt;Link href="/login" className="block px-3 py-2 text-gray-700 font-medium"&gt;登入&lt;/Link&gt;
-                                &lt;Link href="/register" className="block px-3 py-2 text-pink-600 font-medium"&gt;註冊新帳號&lt;/Link&gt;
+                                &lt;Link href="/login" onClick={closeMobileMenu} className="block px-3 py-2 text-gray-700 font-medium"&gt;登入&lt;/Link&gt;
+                                &lt;Link href="/register" onClick={closeMobileMenu} className="block px-3 py-2 text-pink-600 font-medium"&gt;註冊新帳號&lt;/Link&gt;
                             &lt;/&gt;
                         )}
                     &lt;/div&gt;
