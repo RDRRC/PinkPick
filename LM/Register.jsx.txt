@@ -1,3 +1,5 @@
+檔案路徑：resources/js/Pages/Auth/Register.jsx
+
 import { useEffect } from 'react';
 import GuestLayout from '@/Layouts/GuestLayout';
 import InputError from '@/Components/InputError';
@@ -5,7 +7,6 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import { Head, Link, useForm } from '@inertiajs/react';
-
 export default function Register() {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
@@ -13,116 +14,95 @@ export default function Register() {
         password: '',
         password_confirmation: '',
     });
-
-    useEffect(() => {
-        return () => {
+    useEffect(() =&gt; {
+        return () =&gt; {
             reset('password', 'password_confirmation');
         };
     }, []);
-
-    const submit = (e) => {
+    const submit = (e) =&gt; {
         e.preventDefault();
         post(route('register'));
     };
-
     return (
-        <GuestLayout>
-            <Head title="註冊帳號" />
-
-            {/* 🌟 保持視覺一致性：置於左上角的回首頁連結 */}
-            <div className="mb-6">
-                <Link
+        &lt;GuestLayout&gt;
+            &lt;Head title="註冊帳號" /&gt;
+            &lt;div className="mb-6"&gt;
+                &lt;Link
                     href="/"
                     className="text-sm text-gray-500 hover:text-gray-900 transition duration-150 ease-in-out"
-                >
+                &gt;
                     &larr; 回商城首頁
-                </Link>
-            </div>
-
-            <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="姓名" />
-
-                    <TextInput
+                &lt;/Link&gt;
+            &lt;/div&gt;
+            &lt;form onSubmit={submit}&gt;
+                &lt;div&gt;
+                    &lt;InputLabel htmlFor="name" value="姓名" /&gt;
+                    &lt;TextInput
                         id="name"
                         name="name"
                         value={data.name}
                         className="mt-1 block w-full"
                         autoComplete="name"
                         isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
+                        onChange={(e) =&gt; setData('name', e.target.value)}
                         required
-                    />
-
-                    <InputError message={errors.name} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="email" value="電子郵件" />
-
-                    <TextInput
+                    /&gt;
+                    &lt;InputError message={errors.name} className="mt-2" /&gt;
+                &lt;/div&gt;
+                &lt;div className="mt-4"&gt;
+                    &lt;InputLabel htmlFor="email" value="電子郵件" /&gt;
+                    &lt;TextInput
                         id="email"
                         type="email"
                         name="email"
                         value={data.email}
                         className="mt-1 block w-full"
                         autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
+                        onChange={(e) =&gt; setData('email', e.target.value)}
                         required
-                    />
-
-                    <InputError message={errors.email} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password" value="密碼" />
-
-                    <TextInput
+                    /&gt;
+                    &lt;InputError message={errors.email} className="mt-2" /&gt;
+                &lt;/div&gt;
+                &lt;div className="mt-4"&gt;
+                    &lt;InputLabel htmlFor="password" value="密碼" /&gt;
+                    &lt;TextInput
                         id="password"
                         type="password"
                         name="password"
                         value={data.password}
                         className="mt-1 block w-full"
                         autoComplete="new-password"
-                        onChange={(e) => setData('password', e.target.value)}
+                        onChange={(e) =&gt; setData('password', e.target.value)}
                         required
-                    />
-
-                    <InputError message={errors.password} className="mt-2" />
-                </div>
-
-                <div className="mt-4">
-                    <InputLabel htmlFor="password_confirmation" value="確認密碼" />
-
-                    <TextInput
+                    /&gt;
+                    &lt;InputError message={errors.password} className="mt-2" /&gt;
+                &lt;/div&gt;
+                &lt;div className="mt-4"&gt;
+                    &lt;InputLabel htmlFor="password_confirmation" value="確認密碼" /&gt;
+                    &lt;TextInput
                         id="password_confirmation"
                         type="password"
                         name="password_confirmation"
                         value={data.password_confirmation}
                         className="mt-1 block w-full"
                         autoComplete="new-password"
-                        onChange={(e) => setData('password_confirmation', e.target.value)}
+                        onChange={(e) =&gt; setData('password_confirmation', e.target.value)}
                         required
-                    />
-
-                    <InputError message={errors.password_confirmation} className="mt-2" />
-                </div>
-
-                <div className="flex items-center justify-end mt-6">
-                    {/* 中文化並優化連結樣式 */}
-                    <Link
+                    /&gt;
+                    &lt;InputError message={errors.password_confirmation} className="mt-2" /&gt;
+                &lt;/div&gt;
+                &lt;div className="flex items-center justify-end mt-6"&gt;
+                    &lt;Link
                         href={route('login')}
                         className="text-sm text-gray-600 hover:text-gray-900 rounded-md focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 transition duration-150 ease-in-out"
-                    >
+                    &gt;
                         已經有帳號了？點此登入
-                    </Link>
-
-                    {/* 按鈕中文化 */}
-                    <PrimaryButton className="ml-4" disabled={processing}>
+                    &lt;/Link&gt;
+                    &lt;PrimaryButton className="ml-4" disabled={processing}&gt;
                         註冊
-                    </PrimaryButton>
-                </div>
-            </form>
-        </GuestLayout>
+                    &lt;/PrimaryButton&gt;
+                &lt;/div&gt;
+            &lt;/form&gt;
+        &lt;/GuestLayout&gt;
     );
 }

@@ -32,9 +32,12 @@ export default function Shop() {
                 params: { ...filters, page: page },
                 signal: signal // 綁定中止訊號
             });
+            // 🌟 修正核心：解構並加入防呆。如果沒有 payload 就直接讀 response.data
+            const responseData = response.data?.payload || response.data;
 
-            setProducts(response.data.payload.data);
-            setLastPage(response.data.payload.last_page);
+            // 確保即使找不到 data 屬性，也會塞入空陣列 []，絕對不讓它變成 undefined
+            setProducts(responseData?.data || []);
+            setLastPage(responseData?.last_page || 1);
 
         } catch (error) {
             // 🌟 核心防護：如果是因為防抖或重新發送而被取消的請求，不視為錯誤
@@ -106,7 +109,6 @@ export default function Shop() {
         <div className="min-h-screen bg-gray-100">
             <Head title="PinkPick 商城" />
             <Navbar />
-
             <div className="max-w-7xl mx-auto px-4 flex flex-col md:flex-row items-start gap-6 pb-10 mt-6">
                 {/* 手機版篩選按鈕 */}
                 <div className="md:hidden w-full">
@@ -144,7 +146,8 @@ export default function Shop() {
                     ) : (
                         <>
                             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 min-h-[500px]">
-                                {products.length > 0 ? (
+                                {/* 🌟 雙重防護：確保 products 絕對是個陣列再呼叫 .length */}
+                                {(products || []).length > 0 ? (
                                     products.map((product) => (
                                         <ProductCard key={product.id} product={product} />
                                     ))
