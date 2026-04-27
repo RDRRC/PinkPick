@@ -13,7 +13,7 @@ export default function Navbar() {
 
     // 🌟 優化 1：將權限判斷提取為獨立變數，建議未來後端 API 應多傳遞一個 `is_admin` 或 `role` 欄位
     // 目前先向下相容您的 email 判斷，但為未來的擴充打好基礎
-    const isAdmin = auth?.user?.is_admin || auth?.user?.email === 'admin@pinkpick.com';
+    const isAdmin = auth?.user?.is_admin;
 
     useEffect(() => {
         const handleClickOutside = (event) => {

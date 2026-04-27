@@ -42,6 +42,10 @@ RUN chown -R www-data:www-data storage bootstrap/cache
 # 暴露 80 埠
 EXPOSE 80
 
-# 👇 🌟 核心修正：覆寫啟動指令 (CMD)
-# 邏輯：容器啟動時，先強制跑 Migration，跑完之後再正式啟動 Apache 伺服器 (apache2-foreground)
-CMD ["sh", "-c", "php artisan migrate --force && apache2-foreground"]
+# 複製腳本到容器內
+COPY entrypoint.sh /usr/local/bin/
+# 給予執行權限
+RUN chmod +x /usr/local/bin/entrypoint.sh
+
+# 3. 這是啟動：指名「容器內部」的地址
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

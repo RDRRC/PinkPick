@@ -18,7 +18,7 @@ class AppServiceProvider extends ServiceProvider
         }
         Vite::prefetch(concurrency: 3);
         Gate::define('admin', function (User $user) {
-            return $user->email === 'admin@pinkpick.com';
+            return $user->is_admin === true; 
         });
     }
 }
