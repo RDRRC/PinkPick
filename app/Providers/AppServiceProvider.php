@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Gate;
 use App\Models\User;
 use Illuminate\Support\Facades\URL; // 👉 1. 記得加上這行引入 URL 工具
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -34,5 +35,8 @@ class AppServiceProvider extends ServiceProvider
         Gate::define('admin', function (User $user) {
             return $user->is_admin === true; // 改為依賴資料庫欄位
         });
+        // 加上這行，強迫所有未指定長度的字串預設為 191
+        // (這是為了相容舊版 MySQL 的 utf8mb4 索引限制，同時也能安撫 PostgreSQL)
+        Schema::defaultStringLength(191);
     }
 }

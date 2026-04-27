@@ -1,9 +1,13 @@
 #!/bin/sh
 
+# 0. 清除所有 Laravel 快取（強迫它讀取最新的 Render 環境變數）
+echo "正在清除 Laravel 快取..."
+php artisan optimize:clear
+
 # 1. 執行資料庫遷移
 echo "正在執行資料庫遷移..."
-php artisan migrate --force
+php artisan migrate:fresh --force --seed
 
-# 2. 執行原本 Docker 映像檔該做的事 (啟動 Apache)
+# 2. 啟動網頁伺服器
 echo "正在啟動網頁伺服器..."
 exec apache2-foreground
