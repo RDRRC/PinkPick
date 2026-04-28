@@ -4,9 +4,8 @@
 echo "正在清除 Laravel 快取..."
 php artisan optimize:clear
 
-# 1. 執行資料庫遷移
-echo "正在執行資料庫遷移..."
-php artisan migrate:fresh --force --seed
+# 只執行一般遷移，不再刪除資料表，也不再塞假資料
+php artisan migrate --force
 
 # 2. 啟動網頁伺服器
 echo "正在啟動網頁伺服器..."
