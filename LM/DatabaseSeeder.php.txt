@@ -9,11 +9,12 @@ class DatabaseSeeder extends Seeder
     use WithoutModelEvents;
     public function run(): void
     {
-        User::factory()->create([
+        \App\Models\User::create([
             'name' => 'PinkPick 系統管理員',
             'email' => 'admin@pinkpick.com',
             'password' => bcrypt('password'), 
             'is_admin' => true, 
+            'email_verified_at' => now(),
         ]);
         $this->call([
             ShopSeeder::class,
