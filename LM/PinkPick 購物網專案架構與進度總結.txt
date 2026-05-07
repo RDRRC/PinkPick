@@ -4,11 +4,12 @@
 * **專案定位**：具備現代化架構與防禦性編程思維的 B2C 電商平台 (針對全端開發能力展示設計)
 * **技術棧**：Laravel 11.x + React + Inertia.js + Vite + Tailwind CSS
 * **資料庫**：PostgreSQL (雲端 Serverless 架構 - Neon) / MySQL (本地開發)
-* **部署環境**：Render (Web Service) 結合 GitHub CI/CD 自動化部署
+* **部署環境**：
+  * **本地開發**：使用 **Laragon** 建立極速本地環境 (規避雲端同步延遲) 搭配 WSL2 進行指令操作。
+  * **生產環境**：Render (Web Service) 結合 GitHub CI/CD 自動化部署。
 
 ## 二、 核心亮點：高併發、資安防護與架構設計 (Security & Architecture)
 本專案不僅實作電商基礎功能，更著重於企業級的防護機制與系統穩定性：
-
 * **防超賣與資料一致性 (Pessimistic Locking)**：於結帳核心邏輯實作 `DB::beginTransaction()` 與 `lockForUpdate()` 悲觀鎖，徹底消滅高併發情境下的庫存超賣與髒讀風險。
 * **計價權威後端化與單價快照 (Price Snapshot)**：所有金額計算均在後端重新撈取 DB 原始定價，徹底阻斷前端惡意竄改 Payload 的攻擊。同時於結帳時，將商品當下售價與規格固定存入 `order_items`，確保歷史訂單紀錄不受未來價格波動影響。
 * **動態化企業級授權閘門 (Gate)**：捨棄高風險的靜態寫死驗證，於 `AppServiceProvider` 中依賴資料庫 `is_admin` 欄位定義 `Gate::define('admin')`。前端精準隱藏入口，後端阻斷非法 API 請求，並消除 Artisan 快取編譯錯誤的風險。
@@ -16,7 +17,7 @@
 * **自研 AI 協作防護工具**：為解決與 AI 協作時的機密外洩風險，自研 `sync_env.php` 自動化同步環境變數，搭配過濾機制確保真實憑證與 API Key 絕不入庫。
 
 ## 三、 架構難點突破 (Battle Scars)
-* **跨環境資料庫底層重構與連線池 (Connection Pool) 攻堅**：在將專案從本地 MySQL 遷移至雲端 PostgreSQL (Neon) 的過程中，克服了嚴格的 DDL 語法限制。並成功排查出雲端資料庫 PgBouncer 連線池 (`-pooler`) 導致長交易 (Transaction) 崩潰的深層 Bug，透過分離直連字串與優化遷移腳本，確立開發與正式環境的完美對接。
+* **跨環境資料庫底層重構與連線池 (Connection Pool) 攻堅**：在將專案從本地 MySQL (Laragon) 遷移至雲端 PostgreSQL (Neon) 的過程中，克服了嚴格的 DDL 語法限制。並成功排查出雲端資料庫 PgBouncer 連線池 (`-pooler`) 導致長交易 (Transaction) 崩潰的深層 Bug，透過分離直連字串與優化遷移腳本，確立開發與正式環境的完美對接。
 * **規避 PHP 表單限制與效能瓶頸**：在商品圖片上傳時，前端採用 `_method: 'put'` 規避 PHP 無法透過 PUT 接收 FormData 的經典限制；後端在商品維護系統中，運用 `with('category')` 與巢狀預載入 `attributes.attribute`，徹底解決 N+1 Query 資料庫檢索效能瓶頸。
 
 ## 四、 核心商務模組與 UX/UI 呈現
@@ -27,11 +28,15 @@
 * **現代化微互動與狀態回饋**：
   * **防護級 UI 回饋**：實作 Toast 提示系統，運用 React `useRef` 與 `useEffect` 的 Cleanup 機制，徹底消滅計時器造成的記憶體洩漏 (Memory Leak) 與卸載報錯。
   * **視覺體驗升級**：全面導入 Tailwind 的 `group-hover` 與 `scale-105` 實作高質感商品圖片微互動，並加入防呆的「空狀態 (Empty State)」視覺引導。
+* **前後端防禦性渲染與降級策略 (Graceful Degradation)**：
+  * **雙軌渲染邊界**：明確區分「同步渲染」與「非同步骨架」。前台商城 (Shop) 嚴格遵守骨架優先策略，Inertia Controller 僅回傳視圖，實體數據交由前端 Axios 呼叫獨立 API 獲取，以極大化首頁載入效能 (TTFB) 與篩選靈活度。
+  * **分頁防崩潰機制**：後端處理分頁資料若遇異常，嚴禁回傳 `null` 或單純空陣列 `[]`。強制要求實例化標準的空 `LengthAwarePaginator` 物件回傳，以保護前端 React 元件 (如 `.data.map`) 不因型別丟失而發生致命白畫面，並無縫觸發 Empty State 防呆視覺。
+  * **精準型別與異常攔截**：全面導入 PHP 8.2+ 強型別標註 (`Response`, `RedirectResponse`)。透過 `where('is_active', true)` 進行防禦性資料庫查詢；單一資源檢索嚴格使用 `findOrFail()`，並將 `ModelNotFoundException` 導向原生 `abort(404)` 以維持系統狀態一致性。
 
 ## 五、 開發環境、DevOps 與時序紀錄
-* **WSL2 在地化遠端開發**：採用 WSL 2 (Ubuntu 22.04) 搭配 VS Code Remote，解決 Windows 與 Linux 檔案系統跨界存取效能瓶頸，並統一相對路徑規範。
+* **混合式在地化遠端開發**：採用 Laragon 作為極速本地伺服器，搭配 WSL 2 (Ubuntu 22.04) 與 VS Code Remote 進行進階指令與套件管理，解決 Windows 與 Linux 檔案系統跨界存取效能瓶頸。
 * **自動化 CI/CD 部署**：串接 Render 與 GitHub，於 `bootstrap/app.php` 實作反向代理標頭信任，解決部署後的 HTTPS 混合內容錯誤。撰寫 `entrypoint.sh` 確保每次部署自動執行安全遷移。
-* **開發時序里程碑**：專案自 2026-02 建立基礎骨架，依序完成原子事務處理 (04/02)、會員與購物閉環 (04/13)、SPA 後台系統 (04/15)，最終於 04/21 成功突破雲端部署挑戰並升級 WSL2 環境。
+* **開發時序里程碑**：專案自 2026-02 建立基礎骨架，依序完成原子事務處理 (04/02)、會員與購物閉環 (04/13)、SPA 後台系統 (04/15)，最終於 04/21 成功突破雲端部署挑戰並升級混合式開發環境。
 
 ## 六、 未來擴充藍圖 (Next Steps Roadmap)
 專案基礎架構已穩定上線，下階段將導入大型系統標配之進階模組：
@@ -41,3 +46,58 @@
 * **[規劃中] 金流串接與 Webhook 冪等性處理**：串接第三方金流 (如 Stripe / ECPay)，並實作非同步 Webhook 狀態驗證，處理掉單與重複扣款防護。
 * **[規劃中] 非同步任務與監控 (Queues & Monitoring)**：導入 Laravel Queues 處理訂單確認信寄送等耗時任務；整合 Sentry 進行線上即時異常監控。
 * **[規劃中] 資料庫軟刪除 (Soft Deletes)**：全面導入 Soft Deletes 以保護訂單與商品關聯歷史報表的完整性。
+
+## 七、 系統核心技術架構圖 (Architecture Blueprint)
+本專案採用微服務與防禦性編程思想，將資料流嚴格分層。從前端雙軌通訊到後端財務精算，確保每一筆請求的安全與一致性：
+
+```mermaid
+graph TD
+    subgraph "Frontend (React + Tailwind CSS)"
+        A[SPA Interface / UI Components] --> B[React Hooks / Context API]
+        
+        %% 前端雙軌通訊
+        B -->|Page Navigation| C[Inertia.js Bridge]
+        B -->|Async API Calls| C2[Axios Client]
+    end
+
+    subgraph "Backend (Laravel 11.x)"
+        %% 路由與中介軟體層
+        C --> D[Web Routes / Middleware]
+        C2 --> D2[API Routes]
+        
+        %% 請求防護層 (Zero Trust)
+        D --> V[FormRequests / Validation]
+        D2 --> V
+        
+        %% 核心業務層
+        V --> E[Controllers / Service Layer]
+        
+        %% 服務層分支與防護
+        E --> BC[BCMath Financial Precision]
+        E --> F[Eloquent Models + PHPDoc Types]
+        
+        %% 統一回傳介面
+        E --> RES[Standardized Response sendError/sendResponse]
+        RES -.->|JSON / Props| B
+        
+        %% 資料庫防護層
+        F --> G[DB Transaction + Pessimistic Locking]
+    end
+
+    subgraph "Infrastructure & DevOps"
+        %% 服務註冊與基礎設施
+        BOOT[AppServiceProvider / Gates] -->|Bootstraps| D
+        G --> H[(PostgreSQL Neon / MySQL (Laragon))]
+        E --> I[Storage Disk / Image Handling]
+        
+        %% 容器化與部署
+        DK[Docker Containerization / entrypoint.sh] --> H
+        DK --> I
+        RND[Render Server + GitHub CI/CD] --> DK
+    end
+    
+    style G fill:#f96,stroke:#333,stroke-width:2px
+    style H fill:#326295,color:#fff
+    style BC fill:#f9d0c4,stroke:#e11d48,stroke-width:2px
+    style RES fill:#dcfce7,stroke:#16a34a,stroke-width:2px
+\```

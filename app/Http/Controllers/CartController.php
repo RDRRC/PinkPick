@@ -83,7 +83,7 @@ class CartController extends Controller
     /**
      * 更新購物車商品數量
      */
-    public function update(Request $request, $id)
+    public function update(Request $request, string $id)
     {
         $validated = $request->validate([
             'quantity' => 'required|integer|min:1'
@@ -117,7 +117,7 @@ class CartController extends Controller
     /**
      * 移除購物車內的特定商品
      */
-    public function destroy(Request $request, $id)
+    public function destroy(Request $request, string $id)
     {
         $cartItem = CartItem::find($id);
 

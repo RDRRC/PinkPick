@@ -4,7 +4,7 @@
 // 0. 防呆機制：檢查使用者有沒有輸入參數
 // ==========================================
 if (!isset($argv[1])) {
-    die("❌ 錯誤：請在指令後面加上要處理的檔案路徑！\n💡 用法範例：php clean_for_lm.php app/Http/Controllers/ProductController.php\n");
+    die("❌ 錯誤：請在指令後面加上要處理的檔案路徑！\n💡 用法範例：php scripts/clean_for_lm.php app/Http/Controllers/ProductController.php\n");
 }
 
 // 1. 接收終端機傳來的目標檔案路徑
@@ -40,7 +40,8 @@ $content = file_get_contents($targetFile);
 // ==========================================
 $content = str_replace('<?php', '', $content);
 $content = preg_replace('#\{\s*/\*.*?\*/\s*\}#s', '', $content);
-$content = preg_replace('#/\*.*?\*/#s', '', $content);
+// 👇 [修復] 修改這行：只刪除 /* 開頭的普通註解，嚴格保留 /** 開頭的 PHPDoc (對 AI 判讀極為重要)
+$content = preg_replace('#/\*(?!\*).*?\*/#s', '', $content);
 $content = preg_replace('#(?<!:)//.*#', '', $content);
 // 5. 移除「假空行」(把整行只有空白或 Tab 的行直接刪除)
 $content = preg_replace('/^[ \t]*[\r\n]+/m', '', $content);

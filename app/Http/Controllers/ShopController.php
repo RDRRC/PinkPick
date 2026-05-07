@@ -1,29 +1,48 @@
 <?php
+// 檔案路徑：app/Http/Controllers/ShopController.php
 
 namespace App\Http\Controllers;
 
-use App\Models\Product; // 🌟 記得引入 Product 模型
+use App\Models\Product;
 use Illuminate\Http\Request;
-use Inertia\Inertia; // 🌟 1. 這裡非常重要！必須把 Inertia 匯入進來
+use Inertia\Inertia;
+use Inertia\Response; // 💡 嚴格標註回傳型別
+use Illuminate\Support\Facades\Log;
 
 class ShopController extends Controller
 {
-    // 🌟 2. 新增這個 index 方法，這是大門警衛指定的接洽窗口
-    public function index()
+    /**
+     * 顯示商城首頁 (骨架渲染)
+     * 
+     * [Assumed: 實際商品資料由前端 Shop.jsx 透過 Axios 呼叫 API 非同步載入]
+     */
+    public function index(): Response
     {
-        // 🌟 3. 回傳名為 Shop 的前端畫面 (這會對應到 resources/js/Pages/Shop.jsx)
+        // 僅回傳前端進入點，不執行冗餘的資料庫查詢
         return Inertia::render('Shop');
     }
-    // 🌟 新增：取得單一商品詳情
-    public function show($id)
+
+    /**
+     * 顯示單一商品詳情 (同步渲染)
+     *
+     * @param string $id 
+     */
+    public function show(string $id): Response
     {
-        // 🌟 完美修正：使用嵌套預載入，一次拉出商品、分類、規格值、以及規格母名稱
-        $product = Product::with(['category', 'attributes.attribute'])->findOrFail($id);
+        try {
+            // 🛡️ 防禦性查詢：利用 where 預先過濾下架商品，並使用嵌套預載入解決 N+1 問題
+            $product = Product::with(['category', 'attributes.attribute'])
+                ->where('is_active', true)
+                ->findOrFail($id);
 
-        abort_if(!$product->is_active, 404, '該商品已下架或不存在');
-
-        return Inertia::render('ProductDetail', [
-            'product' => $product
-        ]);
+            return Inertia::render('ProductDetail', [
+                'product' => $product
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            // 💡 精準捕捉找不到或已下架的例外，交由原生機制拋出標準 404
+            Log::info("嘗試存取不存在或已下架的商品: {$id}");
+            abort(404, '該商品已下架或不存在');
+        }
+        // ⚠️ 刻意不捕捉通用 \Exception，交由全域 Handler 處理，避免前端讀取 null 導致 TypeError 崩潰
     }
 }
