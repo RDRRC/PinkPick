@@ -19,7 +19,20 @@ class CartController extends Controller
             $query->where('session_id', $sessionId)->whereNull('user_id');
         }
         $cartItems = $query->get();
-        return $this->sendResponse($cartItems, '購物車內容取得成功');
+        $removedCount = 0;
+        $validCartItems = $cartItems->reject(function ($item) use (&$removedCount) {
+            if (!$item->product || !$item->product->is_active) {
+                $item->delete(); 
+                $removedCount++;
+                return true; 
+            }
+            return false; 
+        })->values(); 
+        $message = '購物車內容取得成功';
+        if ($removedCount > 0) {
+            $message = "購物車更新：已自動為您移除 {$removedCount} 件下架商品";
+        }
+        return $this->sendResponse($validCartItems, $message);
     }
     public function store(Request $request)
     {
@@ -28,9 +41,9 @@ class CartController extends Controller
             'quantity' => 'integer|min:1',
             'selected_attributes' => 'nullable|array',
         ]);
+        $product = Product::where('is_active', true)->findOrFail($validated['product_id']);
         $attributes = $validated['selected_attributes'] ?? [];
         if (!empty($attributes)) {
-            $product = Product::findOrFail($validated['product_id']);
             $validValueIds = $product->attributes()->pluck('id')->toArray();
             foreach ($attributes as $attrId => $valueId) {
                 if (!in_array($valueId, $validValueIds)) {

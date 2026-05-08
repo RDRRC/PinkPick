@@ -1,10 +1,16 @@
-檔案路徑：app\Services\CartService.php
+檔案路徑：app/Services/CartService.php
 
 namespace App\Services;
 use App\Models\CartItem;
 use Illuminate\Support\Facades\DB;
 class CartService
 {
+    /**
+     * 執行訪客購物車合併至會員購物車
+     *
+     * @param string $guestSessionId 訪客的 Session ID
+     * @param int $userId 會員 ID
+     */
     public function mergeGuestCart(string $guestSessionId, int $userId): void
     {
         DB::transaction(function () use ($guestSessionId, $userId) {
@@ -33,5 +39,28 @@ class CartService
                 }
             }
         });
+    }
+    /**
+     * 💡 第一層防禦：結帳前的終極檢驗閘門
+     * 在 OrderController 開啟資料庫交易 (DB::beginTransaction) 前呼叫此方法
+     */
+    public function validateCartForCheckout(int|null $userId, string $sessionId): void
+    {
+        $query = CartItem::with('product');
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } else {
+            $query->where('session_id', $sessionId)->whereNull('user_id');
+        }
+        $items = $query->get();
+        if ($items->isEmpty()) {
+            throw new \Exception('購物車目前是空的，無法進行結帳。');
+        }
+        foreach ($items as $item) {
+            if (!$item->product || !$item->product->is_active) {
+                $productName = $item->product ? $item->product->name : '未知商品';
+                throw new \Exception("您選購的商品「{$productName}」已下架或失效，請返回購物車移除後再試。");
+            }
+        }
     }
 }

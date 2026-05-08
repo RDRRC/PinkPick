@@ -48,4 +48,32 @@ class CartService
             }
         });
     }
+    /**
+     * 💡 第一層防禦：結帳前的終極檢驗閘門
+     * 在 OrderController 開啟資料庫交易 (DB::beginTransaction) 前呼叫此方法
+     */
+    public function validateCartForCheckout(int|null $userId, string $sessionId): void
+    {
+        $query = CartItem::with('product');
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        } else {
+            $query->where('session_id', $sessionId)->whereNull('user_id');
+        }
+
+        $items = $query->get();
+
+        if ($items->isEmpty()) {
+            throw new \Exception('購物車目前是空的，無法進行結帳。');
+        }
+
+        foreach ($items as $item) {
+            // 結帳瞬間的最後掃描：防範使用者停留頁面過久產生的時間差
+            if (!$item->product || !$item->product->is_active) {
+                $productName = $item->product ? $item->product->name : '未知商品';
+                throw new \Exception("您選購的商品「{$productName}」已下架或失效，請返回購物車移除後再試。");
+            }
+        }
+    }
 }

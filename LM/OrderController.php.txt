@@ -19,7 +19,7 @@ class OrderController extends Controller
     /**
      * 建立訂單與扣除庫存
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, \App\Services\CartService $cartService): JsonResponse
     {
         $validated = $request->validate([
             'recipient_name' => 'required|string|max:255',
@@ -45,9 +45,8 @@ class OrderController extends Controller
         $cartItems = CartItem::with(['product'])
             ->where('user_id', $userId)
             ->get();
-        if ($cartItems->isEmpty()) {
-            return $this->sendError('購物車是空的，無法結帳', 400);
-        }
+        $cartService->validateCartForCheckout(Auth::id(), $request->session()->getId());
+        $cartItems = CartItem::with(['product'])->where('user_id', Auth::id())->get();
         $totalAmount = $cartItems->reduce(function (string $total, CartItem $item): string {
             $itemTotal = bcmul((string) $item->product->price, (string) $item->quantity, 2);
             return bcadd($total, $itemTotal, 2);

@@ -21,7 +21,7 @@ class OrderController extends Controller
     /**
      * 建立訂單與扣除庫存
      */
-    public function store(Request $request): JsonResponse
+    public function store(Request $request, \App\Services\CartService $cartService): JsonResponse
     {
         $validated = $request->validate([
             'recipient_name' => 'required|string|max:255',
@@ -59,9 +59,10 @@ class OrderController extends Controller
             ->where('user_id', $userId)
             ->get();
 
-        if ($cartItems->isEmpty()) {
-            return $this->sendError('購物車是空的，無法結帳', 400);
-        }
+        // 💡 呼叫終極閘門 (如果失敗會直接拋出 Exception 被下方的 catch 接住並回傳錯誤給前端)
+        $cartService->validateCartForCheckout(Auth::id(), $request->session()->getId());
+        // 💡 取代掉原本 OrderController 內贅餘的 $cartItems->isEmpty() 判斷
+        $cartItems = CartItem::with(['product'])->where('user_id', Auth::id())->get();
 
         // ==========================================
         // 💰 SCOPE 財務安全性：使用 BCMath 處理精確小數運算

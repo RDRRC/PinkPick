@@ -12,7 +12,6 @@ class CartController extends Controller
 {
     public function index(Request $request)
     {
-        // 【修復 1】改用 Auth::id() 消除 Intelephense 警告
         $userId = Auth::id();
         $sessionId = $request->session()->getId();
 
@@ -25,7 +24,27 @@ class CartController extends Controller
         }
 
         $cartItems = $query->get();
-        return $this->sendResponse($cartItems, '購物車內容取得成功');
+        $removedCount = 0;
+
+        // 💡 第三層防禦：無聲過濾並自動刪除已下架的商品
+        $validCartItems = $cartItems->reject(function ($item) use (&$removedCount) {
+            // 檢查關聯的商品是否存在且為上架狀態
+            if (!$item->product || !$item->product->is_active) {
+                $item->delete(); // 從資料庫默默移除
+                $removedCount++;
+                return true; // 標記為從目前的陣列中剔除
+            }
+            return false; // 保留正常商品
+        })->values(); // 重新整理陣列的 Key，避免前端 React 迴圈報錯
+
+        $message = '購物車內容取得成功';
+        if ($removedCount > 0) {
+            // 變更 API 成功訊息，或者如果你前端有接 Session Toast，可以取消註解下一行
+            // session()->flash('warning', "已為您自動移除 {$removedCount} 件下架商品");
+            $message = "購物車更新：已自動為您移除 {$removedCount} 件下架商品";
+        }
+
+        return $this->sendResponse($validCartItems, $message);
     }
 
     public function store(Request $request)
@@ -36,14 +55,13 @@ class CartController extends Controller
             'selected_attributes' => 'nullable|array',
         ]);
 
+        // 🌟 修正：移到最外層！確保所有加入動作都受到源頭防禦
+        $product = Product::where('is_active', true)->findOrFail($validated['product_id']);
+
         $attributes = $validated['selected_attributes'] ?? [];
 
-        // EAV 規格防護：確保前端傳來的規格確實存在於該商品中
         if (!empty($attributes)) {
-            // 直接找商品 (不需 with，因為下一行直接用 Query Builder)
-            $product = Product::findOrFail($validated['product_id']);
-
-            // 【修復 2】加上 () 呼叫 attributes() 方法，避免與 Laravel 底層 $attributes 陣列衝突
+            // 原本這裡的 findOrFail 已經不需要了，直接使用上方撈好的 $product
             $validValueIds = $product->attributes()->pluck('id')->toArray();
 
             foreach ($attributes as $attrId => $valueId) {
