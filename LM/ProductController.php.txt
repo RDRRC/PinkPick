@@ -1,4 +1,4 @@
-檔案路徑：app\Http\Controllers\ProductController.php
+檔案路徑：app/Http/Controllers/ProductController.php
 
 namespace App\Http\Controllers;
 use App\Models\Product;
@@ -6,9 +6,14 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Builder;
 class ProductController extends Controller
 {
+    /**
+     * 商品列表 API (支援動態篩選)
+     * GET /api/products?category_id=1&price_min=1000&sort=price_asc
+     */
     public function index(Request $request)
     {
-        $query = Product::query()->with(['category', 'attributes']);
+        $query = Product::query()->with(['category', 'attributes'])
+            ->where('is_active', true);
         $query->when($request->input('keyword'), function (Builder $q, $keyword) {
             $q->where('name', 'like', "%{$keyword}%");
         });

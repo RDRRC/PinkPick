@@ -1,21 +1,39 @@
-檔案路徑：app\Http\Controllers\ShopController.php
+檔案路徑：app/Http/Controllers/ShopController.php
 
 namespace App\Http\Controllers;
-use App\Models\Product; 
+use App\Models\Product;
 use Illuminate\Http\Request;
-use Inertia\Inertia; 
+use Inertia\Inertia;
+use Inertia\Response; 
+use Illuminate\Support\Facades\Log;
 class ShopController extends Controller
 {
-    public function index()
+    /**
+     * 顯示商城首頁 (骨架渲染)
+     * 
+     * [Assumed: 實際商品資料由前端 Shop.jsx 透過 Axios 呼叫 API 非同步載入]
+     */
+    public function index(): Response
     {
         return Inertia::render('Shop');
     }
-    public function show($id)
+    /**
+     * 顯示單一商品詳情 (同步渲染)
+     *
+     * @param string $id 
+     */
+    public function show(string $id): Response
     {
-        $product = Product::with(['category', 'attributes.attribute'])->findOrFail($id);
-        abort_if(!$product->is_active, 404, '該商品已下架或不存在');
-        return Inertia::render('ProductDetail', [
-            'product' => $product
-        ]);
+        try {
+            $product = Product::with(['category', 'attributes.attribute'])
+                ->where('is_active', true)
+                ->findOrFail($id);
+            return Inertia::render('ProductDetail', [
+                'product' => $product
+            ]);
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::info("嘗試存取不存在或已下架的商品: {$id}");
+            abort(404, '該商品已下架或不存在');
+        }
     }
 }

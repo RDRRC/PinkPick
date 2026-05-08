@@ -5,35 +5,68 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Facades\Auth; // 🌟 記得引入 Auth
+use Inertia\Response;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class AdminOrderController extends Controller
 {
-    // 1. 顯示後台訂單列表
-    public function index()
+    /**
+     * 顯示訂單管理列表
+     */
+    public function index(): Response
     {
-        // 撈取全站所有訂單，並載入關聯明細，以最新訂單排序
-        $orders = Order::with(['items.product'])
-            ->orderBy('created_at', 'desc')
-            ->paginate(20);
 
-        return Inertia::render('Admin/OrderManagement', [
-            'orders' => $orders
-        ]);
+        Gate::authorize('admin');
+
+        try {
+            $orders = Order::with(['items.product'])
+                ->orderBy('created_at', 'desc')
+                ->paginate(20);
+
+            return Inertia::render('Admin/OrderManagement', [
+                'orders' => $orders
+            ]);
+        } catch (\Exception $e) {
+            Log::error('AdminOrderController@index 發生異常: ' . $e->getMessage());
+            $emptyPaginator = new LengthAwarePaginator(
+                items: [],
+                total: 0,
+                perPage: 20,
+                currentPage: 1,
+                options: ['path' => request()->url()]
+            );
+
+            return Inertia::render('Admin/OrderManagement', [
+                'orders' => $emptyPaginator
+            ]);
+        }
     }
 
-    // 2. 處理狀態更新請求
-    public function updateStatus(Request $request, $id)
+    /**
+     * 更新訂單狀態
+     */
+    public function updateStatus(Request $request, string $id): RedirectResponse
     {
+        Gate::authorize('admin');
+
         $validated = $request->validate([
-            // 驗證狀態是否在我們資料庫設計的允許範圍內
             'status' => 'required|in:pending,paid,shipped,completed,cancelled'
         ]);
 
-        $order = Order::findOrFail($id);
-        $order->update(['status' => $validated['status']]);
+        try {
+            $order = Order::findOrFail($id);
+            $order->update(['status' => $validated['status']]);
 
-        // 修改成功後返回上一頁 (Inertia 會自動更新畫面資料)
-        return back();
+            return back()->with('success', '訂單狀態更新成功');
+        } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
+            Log::warning('嘗試更新不存在的訂單狀態: ' . $id);
+            return back()->withErrors(['error' => '找不到指定的訂單資料。']);
+        } catch (\Exception $e) {
+            Log::error('AdminOrderController@updateStatus 發生異常: ' . $e->getMessage());
+            return back()->withErrors(['error' => '系統異常，訂單狀態更新失敗。']);
+        }
     }
 }

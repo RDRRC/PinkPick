@@ -1,20 +1,25 @@
-檔案路徑：app\Http\Controllers\OrderController.php
+檔案路徑：app/Http/Controllers/OrderController.php
 
 namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\CartItem;
-use App\Models\Product; 
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log; 
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Inertia\Inertia; 
+use Inertia\Inertia;
+use Illuminate\Http\JsonResponse; 
+use Illuminate\Http\RedirectResponse; 
 class OrderController extends Controller
 {
-    public function store(Request $request)
+    /**
+     * 建立訂單與扣除庫存
+     */
+    public function store(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'recipient_name' => 'required|string|max:255',
@@ -25,12 +30,6 @@ class OrderController extends Controller
         $userId = Auth::id();
         $user = Auth::user();
         assert($user instanceof User);
-        if ($user) {
-            $updateData = [];
-            if (!empty($updateData)) {
-                $user->update($updateData); 
-            }
-        }
         if ($user) {
             $updateData = [];
             if (empty($user->phone) && $request->filled('recipient_phone')) {
@@ -49,9 +48,10 @@ class OrderController extends Controller
         if ($cartItems->isEmpty()) {
             return $this->sendError('購物車是空的，無法結帳', 400);
         }
-        $totalAmount = $cartItems->reduce(function ($total, $item) {
-            return $total + ($item->product->price * $item->quantity);
-        }, 0);
+        $totalAmount = $cartItems->reduce(function (string $total, CartItem $item): string {
+            $itemTotal = bcmul((string) $item->product->price, (string) $item->quantity, 2);
+            return bcadd($total, $itemTotal, 2);
+        }, '0.00'); 
         DB::beginTransaction();
         try {
             foreach ($cartItems as $item) {
@@ -81,7 +81,7 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
                     'quantity' => $item->quantity,
-                    'price' => $item->product->price,
+                    'price' => (string) $item->product->price,
                     'selected_attributes' => $item->selected_attributes,
                 ]);
             }
@@ -98,7 +98,10 @@ class OrderController extends Controller
             return $this->sendError($errorMessage, 400);
         }
     }
-    public function success(Request $request)
+    /**
+     * 結帳成功頁面處理邏輯
+     */
+    public function success(Request $request): \Inertia\Response
     {
         $request->validate([
             'order_number' => ['required', 'string']
@@ -107,11 +110,14 @@ class OrderController extends Controller
         $order = $request->user()->orders()
             ->where('order_number', $orderNumber)
             ->firstOrFail();
-        return \Inertia\Inertia::render('OrderSuccess', [
+        return Inertia::render('OrderSuccess', [
             'order' => $order
         ]);
     }
-    public function index(Request $request)
+    /**
+     * 顯示會員歷史訂單列表
+     */
+    public function index(Request $request): \Inertia\Response|RedirectResponse
     {
         $userId = Auth::id();
         if (!$userId) {
@@ -125,7 +131,10 @@ class OrderController extends Controller
             'orders' => $orders
         ]);
     }
-    public function show(Request $request, $orderNumber)
+    /**
+     * 顯示單筆訂單詳情
+     */
+    public function show(Request $request, string $orderNumber): \Inertia\Response
     {
         $userId = Auth::id();
         $order = Order::with(['items.product'])

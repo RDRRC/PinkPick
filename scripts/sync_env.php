@@ -1,9 +1,9 @@
 <?php
 
-$envFile = __DIR__ . '/.env';
-$exampleFile = __DIR__ . '/.env.example';
+$envFile = dirname(__DIR__) . '/.env';
+$exampleFile = dirname(__DIR__) . '/.env.example';
 
-// 1. 檢查 .env 是否存在 使用方法php sync_env.php
+// 1. 檢查 .env 是否存在 使用方法php scripts/sync_env.php
 if (!file_exists($envFile)) {
     die("❌ 找不到 .env 檔案！請確認你是在專案根目錄執行此腳本。\n");
 }

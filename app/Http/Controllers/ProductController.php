@@ -14,9 +14,9 @@ class ProductController extends Controller
      */
     public function index(Request $request)
     {
-        // 1. 建立查詢建構器 (Query Builder)
-        // 並且使用 with() 預先載入關聯資料，解決 N+1 問題 (面試必問！)
-        $query = Product::query()->with(['category', 'attributes']);
+        // 💡 新增 ->where('is_active', true) ，從源頭阻斷下架商品出現在列表
+        $query = Product::query()->with(['category', 'attributes'])
+            ->where('is_active', true);
 
         // 2. 關鍵字搜尋 (針對商品名稱)
         $query->when($request->input('keyword'), function (Builder $q, $keyword) {

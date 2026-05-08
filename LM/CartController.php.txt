@@ -1,4 +1,4 @@
-檔案路徑：app\Http\Controllers\CartController.php
+檔案路徑：app/Http/Controllers/CartController.php
 
 namespace App\Http\Controllers;
 use App\Models\CartItem;
@@ -59,7 +59,10 @@ class CartController extends Controller
         }
         return $this->sendResponse(null, '商品已成功加入購物車');
     }
-    public function update(Request $request, $id)
+    /**
+     * 更新購物車商品數量
+     */
+    public function update(Request $request, string $id)
     {
         $validated = $request->validate([
             'quantity' => 'required|integer|min:1'
@@ -81,7 +84,10 @@ class CartController extends Controller
         ]);
         return $this->sendResponse(null, '購物車數量已更新');
     }
-    public function destroy(Request $request, $id)
+    /**
+     * 移除購物車內的特定商品
+     */
+    public function destroy(Request $request, string $id)
     {
         $cartItem = CartItem::find($id);
         if (!$cartItem) {
