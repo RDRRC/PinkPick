@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
 use App\Models\Order;
@@ -7,21 +9,23 @@ use App\Models\OrderItem;
 use App\Models\CartItem;
 use App\Models\Product;
 use App\Models\User;
+use App\Services\CartService;
 use Illuminate\Http\Request;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Illuminate\Http\JsonResponse; // 新增引入
-use Illuminate\Http\RedirectResponse; // 新增引入
+use Inertia\Response;
 
 class OrderController extends Controller
 {
     /**
-     * 建立訂單與扣除庫存
+     * 建立訂單與扣除庫存 (核心防禦：悲觀鎖 + 排序防死鎖)
      */
-    public function store(Request $request, \App\Services\CartService $cartService): JsonResponse
+    public function store(Request $request, CartService $cartService): JsonResponse
     {
         $validated = $request->validate([
             'recipient_name' => 'required|string|max:255',
@@ -30,76 +34,45 @@ class OrderController extends Controller
             'shipping_address' => 'required|string|max:255',
         ]);
 
-        $userId = Auth::id();
-        $user = Auth::user();
+        /** @var User $user */
+        $user = Auth::user(); // 此處標註是為了確保後面 update 的安全感
 
-        assert($user instanceof User);
+        // 1. 自動儲存聯絡資訊
+        $updateData = array_filter([
+            'phone' => empty($user->phone) ? $validated['recipient_phone'] : null,
+            'address' => empty($user->address) ? $validated['shipping_address'] : null,
+        ]);
+        if (!empty($updateData)) $user->update($updateData);
 
+        // 2. 取得購物車與分障檢查 (Fail-Fast)
+        $cartItems = CartItem::with(['product'])->where('user_id', $user->id)->get();
+        if ($cartItems->isEmpty()) return $this->sendError('購物車為空', 400);
 
-        // ==========================================
-        // 🌟 無感儲存會員預設聯絡資訊
-        // ==========================================
-        if ($user) {
-            $updateData = [];
+        $cartService->validateCartForCheckout($user->id, $request->session()->getId());
 
-            if (empty($user->phone) && $request->filled('recipient_phone')) {
-                $updateData['phone'] = $request->recipient_phone;
-            }
-
-            if (empty($user->address) && $request->filled('shipping_address')) {
-                $updateData['address'] = $request->shipping_address;
-            }
-
-            if (!empty($updateData)) {
-                $user->update($updateData);
-            }
-        }
-
-        $cartItems = CartItem::with(['product'])
-            ->where('user_id', $userId)
-            ->get();
-
-        // 💡 呼叫終極閘門 (如果失敗會直接拋出 Exception 被下方的 catch 接住並回傳錯誤給前端)
-        $cartService->validateCartForCheckout(Auth::id(), $request->session()->getId());
-        // 💡 取代掉原本 OrderController 內贅餘的 $cartItems->isEmpty() 判斷
-        $cartItems = CartItem::with(['product'])->where('user_id', Auth::id())->get();
-
-        // ==========================================
-        // 💰 SCOPE 財務安全性：使用 BCMath 處理精確小數運算
-        // // [Assumed: 價格與總金額皆以小數 (Decimal) 儲存，且 PHP 已安裝 BCMath 擴充]
-        // ==========================================
-        $totalAmount = $cartItems->reduce(function (string $total, CartItem $item): string {
-            // bcmul: 乘法 (單價 * 數量)，保留 2 位小數
-            $itemTotal = bcmul((string) $item->product->price, (string) $item->quantity, 2);
-
-            // bcadd: 加法 (總計 + 當前項目總額)，保留 2 位小數
-            return bcadd($total, $itemTotal, 2);
-        }, '0.00'); // 初始值設定為字串 '0.00'
+        // 3. 財務計算 (BCMath)
+        $totalAmount = $cartItems->reduce(
+            fn($total, $item) =>
+            bcadd($total, bcmul((string)$item->product->price, (string)$item->quantity, 2), 2),
+            '0.00'
+        );
 
         DB::beginTransaction();
-
         try {
-            // 📦 悲觀鎖 (Pessimistic Locking) 庫存扣除
-            foreach ($cartItems as $item) {
-                $product = Product::where('id', $item->product_id)
-                    ->lockForUpdate()
-                    ->first();
+            // 💡 關鍵：排序鎖定防止 Deadlock
+            $sortedItems = $cartItems->sortBy('product_id');
 
-                if (!$product) {
-                    throw new \Exception("商品「{$item->product->name}」已下架或不存在。");
+            foreach ($sortedItems as $item) {
+                $product = Product::where('id', $item->product_id)->lockForUpdate()->first();
+                if (!$product || $product->stock < $item->quantity) {
+                    throw new \Exception("商品「{$item->product->name}」庫存不足或已下架");
                 }
-
-                if ($product->stock < $item->quantity) {
-                    throw new \Exception("抱歉，商品「{$product->name}」庫存不足，僅剩 {$product->stock} 件。");
-                }
-
                 $product->decrement('stock', $item->quantity);
             }
 
-            // 📝 訂單建立邏輯
             $order = Order::create([
                 'order_number' => 'ORD-' . strtoupper(Str::random(10)),
-                'user_id' => $userId,
+                'user_id' => $user->id,
                 'total_amount' => $totalAmount,
                 'recipient_name' => $validated['recipient_name'],
                 'recipient_email' => $validated['recipient_email'],
@@ -113,66 +86,35 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'product_id' => $item->product_id,
                     'quantity' => $item->quantity,
-                    // 強制轉型為字串以防範浮點數漂移，完美對應 DB 的 decimal
-                    'price' => (string) $item->product->price,
+                    'price' => (string)$item->product->price, // 價格快照
                     'selected_attributes' => $item->selected_attributes,
                 ]);
             }
 
             CartItem::whereIn('id', $cartItems->pluck('id'))->delete();
-
             DB::commit();
 
             return $this->sendResponse(['order_number' => $order->order_number], '訂單建立成功！');
         } catch (\Exception $e) {
             DB::rollBack();
-
-            $errorMessage = $e->getMessage();
-            if (!str_contains($errorMessage, '庫存不足') && !str_contains($errorMessage, '已下架')) {
-                Log::error('Order Checkout Failed: ' . $e->getMessage());
-                $errorMessage = '系統繁忙，訂單建立失敗，請稍後再試。';
-            }
-
-            return $this->sendError($errorMessage, 400);
+            Log::error("結帳失敗: " . $e->getMessage());
+            return $this->sendError($e->getMessage(), 400);
         }
     }
 
     /**
-     * 結帳成功頁面處理邏輯
+     * 會員訂單列表 (優化：分頁保護 + IDOR 防護)
      */
-    public function success(Request $request): \Inertia\Response
+    public function index(Request $request): Response|RedirectResponse
     {
-        $request->validate([
-            'order_number' => ['required', 'string']
-        ]);
+        $user = $request->user();
+        if (!$user) return redirect()->route('login');
 
-        $orderNumber = $request->query('order_number');
-
-        // 完美防禦：天然具備 IDOR 防護
-        $order = $request->user()->orders()
-            ->where('order_number', $orderNumber)
-            ->firstOrFail();
-
-        return Inertia::render('OrderSuccess', [
-            'order' => $order
-        ]);
-    }
-
-    /**
-     * 顯示會員歷史訂單列表
-     */
-    public function index(Request $request): \Inertia\Response|RedirectResponse
-    {
-        $userId = Auth::id();
-
-        if (!$userId) {
-            return redirect()->route('login');
-        }
-
-        $orders = Order::with(['items.product'])
-            ->where('user_id', $userId)
+        // 💡 導入分頁：後端資料結構從 [] 變為 { data: [] }
+        $orders = $user->orders()
+            ->with(['items.product'])
             ->orderBy('created_at', 'desc')
-            ->get();
+            ->paginate(10);
 
         return Inertia::render('Member/Orders', [
             'orders' => $orders
@@ -180,14 +122,12 @@ class OrderController extends Controller
     }
 
     /**
-     * 顯示單筆訂單詳情
+     * 訂單詳情 (IDOR 防護)
      */
-    public function show(Request $request, string $orderNumber): \Inertia\Response
+    public function show(Request $request, string $orderNumber): Response
     {
-        $userId = Auth::id();
-
-        $order = Order::with(['items.product'])
-            ->where('user_id', $userId)
+        $order = $request->user()->orders()
+            ->with(['items.product'])
             ->where('order_number', $orderNumber)
             ->firstOrFail();
 

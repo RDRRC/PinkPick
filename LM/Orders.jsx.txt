@@ -1,11 +1,17 @@
-檔案路徑：resources\js\Pages\Member\Orders.jsx
+檔案路徑：resources/js/Pages/Member/Orders.jsx
 
 import React from 'react';
-import { Head, Link, usePage } from '@inertiajs/react';
+import { Head, Link, usePage, router } from '@inertiajs/react'; 
 import Navbar from '../../Components/Navbar';
-import OrderStatusBadge from '@/Components/OrderStatusBadge'; 
+import OrderStatusBadge from '@/Components/OrderStatusBadge';
+import Pagination from '@/Components/Pagination'; 
 export default function Orders({ orders }) {
     const { auth } = usePage().props;
+    const handlePageChange = (newPage) =&gt; {
+        router.get(route('member.orders'), { page: newPage }, {
+            preserveScroll: true 
+        });
+    };
     return (
         &lt;div className="min-h-screen bg-gray-50 pb-12"&gt;
             &lt;Head title="我的訂單 - PinkPick" /&gt;
@@ -20,7 +26,7 @@ export default function Orders({ orders }) {
                         ← 回到商城購物
                     &lt;/Link&gt;
                 &lt;/div&gt;
-                {!orders || orders.length === 0 ? (
+                {!orders.data || orders.data.length === 0 ? (
                     &lt;div className="bg-white p-8 rounded-lg shadow-sm text-center"&gt;
                         &lt;p className="text-gray-500 mb-4"&gt;您目前還沒有任何訂單紀錄。&lt;/p&gt;
                         &lt;Link
@@ -32,7 +38,7 @@ export default function Orders({ orders }) {
                     &lt;/div&gt;
                 ) : (
                     &lt;div className="space-y-6"&gt;
-                        {orders.map((order) =&gt; (
+                        {orders.data.map((order) =&gt; (
                             &lt;div key={order.id} className="bg-white border border-gray-200 rounded-lg shadow-sm overflow-hidden"&gt;
                                 &lt;div className="bg-gray-50 px-6 py-4 border-b border-gray-200 flex flex-wrap justify-between items-center gap-4"&gt;
                                     &lt;div&gt;
@@ -82,6 +88,15 @@ export default function Orders({ orders }) {
                                 )}
                             &lt;/div&gt;
                         ))}
+                        {orders.last_page &gt; 1 && (
+                            &lt;div className="mt-8 pb-4"&gt;
+                                &lt;Pagination 
+                                    page={orders.current_page} 
+                                    lastPage={orders.last_page} 
+                                    onPageChange={handlePageChange} 
+                                /&gt;
+                            &lt;/div&gt;
+                        )}
                         &lt;div className="text-center mt-8"&gt;
                             &lt;Link href="/shop" className="text-gray-500 hover:text-pink-600 text-sm"&gt;
                                 想買更多嗎？回到商城看看
