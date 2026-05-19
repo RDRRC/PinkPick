@@ -1,14 +1,17 @@
 // 檔案路徑：resources/js/Pages/Profile/Partials/DeleteUserForm.jsx
 
 import { useRef, useState } from 'react';
-import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
-import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { useForm } from '@inertiajs/react';
+import Button from '@/Components/Button';
 
+/**
+ * @param {Object} props
+ * @param {string} [props.className]
+ */
 export default function DeleteUserForm({ className = '' }) {
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
     const passwordInput = useRef();
@@ -56,7 +59,9 @@ export default function DeleteUserForm({ className = '' }) {
                 </p>
             </header>
 
-            <DangerButton onClick={confirmUserDeletion}>刪除帳號</DangerButton>
+            <Button intent="danger" onClick={confirmUserDeletion}>
+                刪除帳號
+            </Button>
 
             <Modal show={confirmingUserDeletion} onClose={closeModal}>
                 <form onSubmit={deleteUser} className="p-6">
@@ -87,11 +92,17 @@ export default function DeleteUserForm({ className = '' }) {
                     </div>
 
                     <div className="mt-6 flex justify-end gap-3">
-                        <SecondaryButton onClick={closeModal}>取消</SecondaryButton>
+                        <Button intent="secondary" onClick={closeModal}>
+                            取消
+                        </Button>
 
-                        <DangerButton className="ms-3" disabled={processing}>
+                        <Button
+                            intent="danger"
+                            loading={processing}
+                            type="submit"
+                        >
                             確認刪除帳號
-                        </DangerButton>
+                        </Button>
                     </div>
                 </form>
             </Modal>

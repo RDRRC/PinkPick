@@ -1,13 +1,16 @@
-檔案路徑：resources\js\Pages\Profile\Partials\DeleteUserForm.jsx
+檔案路徑：resources/js/Pages/Profile/Partials/DeleteUserForm.jsx
 
 import { useRef, useState } from 'react';
-import DangerButton from '@/Components/DangerButton';
 import InputError from '@/Components/InputError';
 import InputLabel from '@/Components/InputLabel';
 import Modal from '@/Components/Modal';
-import SecondaryButton from '@/Components/SecondaryButton';
 import TextInput from '@/Components/TextInput';
 import { useForm } from '@inertiajs/react';
+import Button from '@/Components/Button';
+/**
+ * @param {Object} props
+ * @param {string} [props.className]
+ */
 export default function DeleteUserForm({ className = '' }) {
     const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
     const passwordInput = useRef();
@@ -47,7 +50,9 @@ export default function DeleteUserForm({ className = '' }) {
                     一旦您的帳號被刪除，所有相關的資源與資料將會被永久清除。在刪除帳號之前，請務必先下載或備份您希望保留的任何資料。
                 &lt;/p&gt;
             &lt;/header&gt;
-            &lt;DangerButton onClick={confirmUserDeletion}&gt;刪除帳號&lt;/DangerButton&gt;
+            &lt;Button intent="danger" onClick={confirmUserDeletion}&gt;
+                刪除帳號
+            &lt;/Button&gt;
             &lt;Modal show={confirmingUserDeletion} onClose={closeModal}&gt;
                 &lt;form onSubmit={deleteUser} className="p-6"&gt;
                     &lt;h2 className="text-lg font-medium text-gray-900"&gt;
@@ -72,10 +77,16 @@ export default function DeleteUserForm({ className = '' }) {
                         &lt;InputError message={errors.password} className="mt-2" /&gt;
                     &lt;/div&gt;
                     &lt;div className="mt-6 flex justify-end gap-3"&gt;
-                        &lt;SecondaryButton onClick={closeModal}&gt;取消&lt;/SecondaryButton&gt;
-                        &lt;DangerButton className="ms-3" disabled={processing}&gt;
+                        &lt;Button intent="secondary" onClick={closeModal}&gt;
+                            取消
+                        &lt;/Button&gt;
+                        &lt;Button
+                            intent="danger"
+                            loading={processing}
+                            type="submit"
+                        &gt;
                             確認刪除帳號
-                        &lt;/DangerButton&gt;
+                        &lt;/Button&gt;
                     &lt;/div&gt;
                 &lt;/form&gt;
             &lt;/Modal&gt;
