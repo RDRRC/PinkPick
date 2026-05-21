@@ -1,0 +1,92 @@
+========================================================================
+PinkPick Shopping Network (Demo) - 當前系統架構與技術總結
+========================================================================
+
+[一、 專案基本資訊]
+------------------------------------------------------------------------
+● 專案定位：具備現代化架構與防禦性編程思維的 B2C 電商平台 (全端能力展示)。
+● 技術棧：Laravel 11.x + React + Inertia.js + Vite + Tailwind CSS。
+● 資料庫：PostgreSQL (雲端 Serverless - Neon / 本地 WSL2 原生環境)。
+● 部署與環境：
+  - 本地開發：WSL2 (Ubuntu) 原生環境，實現 Windows 與 Linux 間網路穿透與熱更新。
+  - 生產環境：Render (Web Service) 結合 GitHub CI/CD 自動化部署。
+
+[二、 核心架構金律：高併發與資安防禦]
+------------------------------------------------------------------------
+本專案全面實施企業級防護機制，所有業務邏輯必須強制通過以下濾鏡：
+
+● 防超賣與死鎖防禦 (Deadlock-Free Locking)：
+  - 結帳核心強制實作 DB::beginTransaction() 與 lockForUpdate() 悲觀鎖。
+  - 多商品結帳強制執行「商品 ID 排序鎖定機制」，徹底消除高併發死鎖風險。
+
+● 動態授權閘門 (Gate) 與 IDOR 天然防護：
+  - 於 AppServiceProvider 動態判定管理員 is_admin 權限，從底層阻斷非法後台 API 請求。
+  - 資源存取（如 orders、carts）全數強制透過 $request->user() 進行關聯查詢，從語法層面徹底絕育 IDOR 越權存取漏洞。
+
+● 計價權威與價格快照 (Price Snapshot)：
+  - 金額計算完全由後端主導，阻斷前端 Payload 竄改。
+  - 結帳時將當下售價固定存入 order_items，確保歷史訂單紀錄不受未來價格波動影響。
+
+● 高精度財務精算與 Runtime 防護：
+  - 全域頂部宣告 [declare(strict_types=1);] 確保執行時期型別絕對安全。
+  - 金額運算強制採用 BCMath 套件，對接 decimal(10, 2) 欄位，杜絕浮點數誤差。
+
+● 數據規模防禦 (Pagination Strategy)：
+  - 歷史訂單、商品清單等成長型數據強制實作 paginate(10) 保護伺服器記憶體。
+  - 配合前端數據解構 (orders.data) 與 preserveScroll，維持流暢的分頁體驗。
+
+● 購物車三層縱深防禦 (Defense in Depth)：
+  - 源頭防禦：加入購物車時實作 where('is_active', true) 嚴格把關。
+  - 無聲過濾：讀取時使用 reject 搭配 values() 移除下架商品，消除 JSON 序列化地雷。
+  - 終極閘門：於 CartService 實作 Fail-Fast 原則，在開啟鎖定前攔截無效請求。
+
+[三、 核心商務模組與 DX/UX 優化]
+------------------------------------------------------------------------
+● 購物閉環與 EAV 模式：
+  採用 EAV 模式處理規格選擇，結帳透過 Hash 進行防重複比對，並針對 Session 建立索引。
+
+● 管理員後台系統 (SPA CRUD)：
+  - 模型事件驅動：運用 findOrFail()->update() 精準觸發 Laravel Model Events。
+  - 無跳轉體驗：React Modal 一頁式 CRUD，結合 withQueryString() 保留搜尋與篩選狀態。
+
+● UI 元件歸一化與防呆機制 (Component Unification)：
+  - 前端導入 CVA (Class Variance Authority) 變體結構重構全站核心 Button 元件。
+  - 完美封裝 Tailwind 類別語義，並將「防重複點擊」與 Inertia 異步載入狀態 (processing) 強制歸一化，達成前後端防禦性 UX 體驗。
+
+● 消滅警告與自動化型別 (DX Optimization)：
+  - 全面整合 IDE Helper 與 Meta 檔案實現自動化推斷。
+  - 奉行「減法原則」，嚴禁添加冗餘的 PHPDoc 註解，維持程式碼純淨度。
+
+● 自研 AI-Ops 協作工具鏈：
+  - sync_env.php：自動化同步環境變數，確保機密不入庫。
+  - clean_for_lm.php：優化大語言模型程式碼解析，解決 Token 消耗與安全隱私。
+
+[四、 開發環境與 DevOps 現行配置]
+------------------------------------------------------------------------
+● No-Docker 輕量化策略：採用 WSL2 原生環境搭配 php artisan serve 與 Vite host 參數。
+● 自動化 CI/CD 拓撲：串接 Render 與 GitHub，於 bootstrap/app.php 實作反向代理標頭信任以維持 HTTPS 一致性。
+
+[五、 未來擴充藍圖 (Next Steps)]
+------------------------------------------------------------------------
+● [SEO] 重構商品網址為 SEO 友善的 /slug。
+● [測試] 導入 Pest 針對「結帳防死鎖」與「權限閘門」撰寫 Feature Test。
+● [金流] 串接第三方金流並實作 Webhook 冪等性處理，防範重複扣款。
+● [監控] 整合 Laravel Pulse 監控悲觀鎖等待時間與連線池負擔。
+
+[六、 系統核心技術架構圖 (邏輯流向)]
+------------------------------------------------------------------------
+[Frontend: React] -> [Inertia/Axios Bridge] -> [Laravel Web/API Routes]
+      |                                              |
+      |                                      [Strict Type Check]
+      |                                              |
+      |                                      [Service Layer: Cart/Order]
+      |                                              |
+      |                                [BCMath] + [Sorted Locking]
+      |                                              |
+[State Update] <--- [JSON Response] <--- [DB Transaction + Pessimistic Lock]
+                                                     |
+                                         [PostgreSQL: Local/Cloud]
+
+========================================================================
+Designed & Maintained by PinkPick Dev Team
+========================================================================

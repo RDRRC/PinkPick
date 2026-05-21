@@ -1,0 +1,92 @@
+========================================================================
+PinkPick Shopping Network (Demo) - 戰鬥傷痕與歷史判例集
+【第一部分：核心技術攻堅與避坑紀錄 (The Scar Protocol)】
+[ID]：SCAR-DB-001
+[主題]：跨環境 PostgreSQL 遷移與雲端連線池 Transaction 崩潰攻堅
+● 現象：
+本地從 MySQL 轉移至 WSL2 PostgreSQL 時遭遇嚴格的 DDL 語法與關聯限制；部署至
+雲端 Neon DB 後，結帳長交易 (Transaction) 頻繁發生 500 斷線崩潰。
+● 禁忌路徑：
+
+調整資料庫 Timeout 超時時間（無效，因核心衝突點在於連線池機制）。
+
+拆分 Transaction 範圍（危險，會破壞電商結帳的原子性與一致性）。
+● 根因：
+雲端 Neon DB 預設透過 PgBouncer 連線池 (-pooler) 運作，而 PgBouncer 的交易
+模式 (Transaction Mode) 不支援跨多個連線請求的複雜長交易，導致連線被強行中斷。
+● 最終正解：
+在生產環境環境變數中，分離出「直連字串 (Direct Connection DB_URL)」專門給
+遷移 (Migration) 與結帳核心 Transaction 使用，成功繞過連線池限制。
+● AI 警戒提示：
+未來涉及訂單金流等 DB::transaction 邏輯，嚴禁建議修改超時時間，必須強制檢查
+是否配置直連字串。
+
+[ID]：SCAR-DEV-002
+[主題]：WSL2 網路隔離與 Vite HMR 熱更新失效網路穿透
+● 現象：
+在 WSL2 (Ubuntu) 原生環境下啟動專案，Windows 瀏覽器無法讀取前端，且 Vite
+的熱更新 (HMR) 完全失效，每次改程式碼都必須手動重開。
+● 禁忌路徑：
+
+安裝傳統虛擬主機 (Laragon) 或改用高資源消耗的 Docker/Sail（違背輕量化原則）。
+● 根因：
+Windows 與 WSL2 虛擬機之間存在網路架構隔離，Vite 預設的 localhost 監聽
+無法穿透虛擬機邊界。
+● 最終正解：
+優化 Vite 設定，強制指定 host 為 0.0.0.0，並將 hmr 的 host 映射回 localhost；
+同時配合 php artisan serve --host=0.0.0.0 參數，完美突破雙系統網路隔離。
+
+[ID]：SCAR-PHP-003
+[主題]：規避 PHP 傳統表單限制與商品圖片 PUT 上傳失敗
+● 現象：
+後台商品維護系統中，使用 React (Inertia) 發送 PUT 請求更新商品圖片與資料時，
+後端 Laravel 噴出驗證錯誤，完全接收不到前端傳入的 FormData 檔案。
+● 禁忌路徑：
+
+將後端路由強行改回 POST（破壞 RESTful API 語意設計）。
+● 根因：
+這是 PHP 底層的經典限制：PHP 無法原生解析 Content-Type 為 multipart/form-data
+的 PUT 請求，導致所有檔案 Payload 消失。
+● 最終正解：
+前端維持 Inertia.post 呼叫，但在 Data 欄位中注入過濾參數 [_method: 'put']；
+後端路由維持 Route::put 接收。利用 Laravel 的 Method Spoofing (方法欺騙)
+完美規避 PHP 限制。
+
+[ID]：SCAR-PERF-004
+[主題]：商品維護系統 N+1 Query 資料庫檢索效能瓶頸
+● 現象：
+後台載入商品列表與規格屬性時，Debugbar 顯示資料庫請求量隨著商品數量成線性
+倍數成長（查詢爆炸），造成嚴重讀取延遲。
+● 根因：
+在 Eloquent 迴圈中直接呼叫關聯物件（如分類、屬性），觸發了經典的 N+1 延遲載入地雷。
+● 最終正解：
+在 Controller 查詢端全面實施 Eager Loading (預載入)，運用 with('category')
+以及巢狀預載入 attributes.attribute，將數百次查詢收斂為單一條高效 Join 指令。
+
+[ID]：SCAR-OPS-005
+[主題]：Render 雲端部署 HTTPS 混合內容 (Mixed Content) 報錯
+● 現象：
+專案成功部署至 Render 生產環境後，前台網頁版面全毀，瀏覽器主控台噴出大量
+Mixed Content 錯誤，拒絕載入非安全 (HTTP) 的資產檔案。
+● 根因：
+生產環境使用了反向代理 (Reverse Proxy) 處理 SSL 憑證，Laravel 後端在接收
+代理請求時，無法自動判定最外層其實是 HTTPS 安全連線，因而生成了 HTTP 網址。
+● 最終正解：
+在後端 bootstrap/app.php 中，調整中介層配置，實作信任所有反向代理標頭
+(Trust Proxies) 機制，確保前後端安全協定完全同步。
+
+【第二部分：專案開發時序與里程碑 (History Log)】
+● 2026-02：
+專案立項，完成本地 WSL2 原生環境拓撲，建立 Laravel 11 與 React 基礎骨架。
+● 2026-04-02：
+攻克後端原子交易核心，完成高併發防超賣的悲觀鎖 (lockForUpdate) 邏輯。
+● 2026-04-13：
+實作 CartService 與 EAV 模式規格選擇，完成前台購物閉環與三層縱深防禦機制。
+● 2026-04-15：
+後台管理員系統 (SPA CRUD) 上線，完成 React Modal 無跳轉一頁式體驗。
+● 2026-04-21：
+全面擊破 PgBouncer 連線池長交易崩潰 Bug、反向代理 HTTPS 混合內容錯誤，
+於 Render 生產環境成功部署上線。
+
+========================================================================
+Designed & Maintained by PinkPick Dev Team
