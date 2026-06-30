@@ -16,7 +16,7 @@ export default function Checkout() {
         }, 0);
     }, [cartItems]);
 
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         recipient_name: auth?.user?.name || '',
         recipient_email: auth?.user?.email || '',
         // 🌟 修改：自動帶入會員的 phone 與 address，若無則為空字串
@@ -24,11 +24,8 @@ export default function Checkout() {
         shipping_address: auth?.user?.address || '',
     });
 
-    const [localError, setLocalError] = useState(null);
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        setLocalError(null);
 
         try {
             const response = await axios.post('/orders', data);
@@ -41,7 +38,6 @@ export default function Checkout() {
 
         } catch (error) {
             const msg = error.response?.data?.message || "訂單送出失敗，請檢查欄位";
-            setLocalError(msg);
             alert(msg);
             console.error(error);
         }

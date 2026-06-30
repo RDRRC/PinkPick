@@ -135,4 +135,17 @@ class OrderController extends Controller
             'order' => $order
         ]);
     }
+    /**
+     * 顯示訂單成功建立的感謝頁面
+     */
+    public function success(Request $request): Response
+    {
+        $order = $request->user()->orders()
+            ->where('order_number', (string) $request->string('order_number'))
+            ->firstOrFail();
+
+        return Inertia::render('OrderSuccess', [
+            'order' => $order
+        ]);
+    }
 }

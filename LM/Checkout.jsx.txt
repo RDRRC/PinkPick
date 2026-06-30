@@ -1,4 +1,4 @@
-檔案路徑：resources\js\Pages\Checkout.jsx
+檔案路徑：resources/js/Pages/Checkout.jsx
 
 import React, { useMemo, useState } from 'react';
 import axios from 'axios'; 
@@ -14,16 +14,14 @@ export default function Checkout() {
             return total + (price * item.quantity);
         }, 0);
     }, [cartItems]);
-    const { data, setData, post, processing, errors } = useForm({
+    const { data, setData, processing, errors } = useForm({
         recipient_name: auth?.user?.name || '',
         recipient_email: auth?.user?.email || '',
         recipient_phone: auth?.user?.phone || '',
         shipping_address: auth?.user?.address || '',
     });
-    const [localError, setLocalError] = useState(null);
     const handleSubmit = async (e) =&gt; {
         e.preventDefault();
-        setLocalError(null);
         try {
             const response = await axios.post('/orders', data);
             const { order_number } = response.data.payload;
@@ -31,7 +29,6 @@ export default function Checkout() {
             router.visit(&#96;/orders/success?order_number=${order_number}&#96;);
         } catch (error) {
             const msg = error.response?.data?.message || "訂單送出失敗，請檢查欄位";
-            setLocalError(msg);
             alert(msg);
             console.error(error);
         }
